@@ -7,12 +7,12 @@ import { useProfile } from '@/hooks/user/useProfile';
 import { Spinner } from '@/components/ui';
 
 export function Navbar() {
-  const { isAdmin, isAuthenticated, user } = useAuthContext();
+  const { isAdmin, isAuthenticated } = useAuthContext();
   const { cartCount } = useCartContext();
   const { logout } = useAuth();
   const navigate = useNavigate();
 
-  const { profile: accountData, isLoading: isFetchingAccount, refetch } = useProfile(false);
+  const { profile: accountData, isLoading: isFetchingAccount, refetch } = useProfile(isAuthenticated);
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -30,6 +30,12 @@ export function Navbar() {
 
   const handleAccountClick = () => {
     setIsDropdownOpen(!isDropdownOpen);
+
+    console.log({
+      isAuthenticated,
+      accountData,
+    });
+
     if (!isDropdownOpen && isAuthenticated && !accountData) {
       void refetch();
     }
@@ -48,21 +54,6 @@ export function Navbar() {
           <NavLink to="/products" className={({ isActive }) => isActive ? 'text-indigo-600 font-semibold' : 'hover:text-indigo-600 transition-colors'}>
             Sản phẩm
           </NavLink>
-          {isAuthenticated && (
-            <NavLink
-              to="/orders"
-              className={({ isActive }) =>
-                isActive ? 'text-indigo-600 font-semibold' : 'hover:text-indigo-600 transition-colors'
-              }
-            >
-              Đơn hàng
-            </NavLink>
-          )}
-          {isAdmin && (
-            <NavLink to="/admin" className="text-amber-600 font-semibold hover:text-amber-700 transition-colors">
-              Admin
-            </NavLink>
-          )}
         </div>
 
         {/* Right actions */}

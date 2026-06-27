@@ -87,7 +87,7 @@ export function Input({ label, error, id, className = '', ...props }: InputProps
 // ── Badge ─────────────────────────────────────────────
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: 'primary' | 'success' | 'warning' | 'danger' | 'neutral' | 'info';
+  variant?: 'primary' | 'success' | 'warning' | 'error' | 'neutral' | 'info';
   className?: string;
 }
 
