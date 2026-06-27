@@ -1,72 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import * as productService from '@/services/admin/admin.product.service';
-import type { AdminProductOverviewResponse } from '@/types/admin.types';
-import { Spinner } from '@/components/ui';
+import { Spinner, Button } from '@/components/ui';
 import { formatCurrency } from '@/utils/formatCurrency';
-
-const mockProducts: AdminProductOverviewResponse[] = [
-  {
-    id: 1,
-    name: 'Áo Sơ Mi Nam Cổ Trụ Phối Nút Vạt Bầu',
-    brandName: 'Zara',
-    categoryName: 'Áo Sơ Mi',
-    salePrice: 250000,
-    comparePrice: 350000,
-    status: 'ACTIVE',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1596755094514-f87e32f85e2c?w=100&h=100&fit=crop',
-    createdAt: '2023-12-01T10:00:00Z',
-    totalStock: 150,
-    totalSold: 45,
-  },
-  {
-    id: 2,
-    name: 'Quần Jeans Ống Suông Phong Cách Hàn Quốc',
-    brandName: 'Levi\'s',
-    categoryName: 'Quần Jeans',
-    salePrice: 450000,
-    comparePrice: null,
-    status: 'ACTIVE',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=100&h=100&fit=crop',
-    createdAt: '2023-12-05T14:30:00Z',
-    totalStock: 80,
-    totalSold: 120,
-  },
-  {
-    id: 3,
-    name: 'Giày Thể Thao Nam Chạy Bộ Nhẹ Nhàng',
-    brandName: 'Nike',
-    categoryName: 'Giày',
-    salePrice: 1200000,
-    comparePrice: 1500000,
-    status: 'INACTIVE',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=100&h=100&fit=crop',
-    createdAt: '2023-12-10T09:15:00Z',
-    totalStock: 0,
-    totalSold: 300,
-  },
-];
+import { useAdminProducts } from '@/hooks/admin/useAdminProducts';
+import { useAdminCategories, useAdminBrands, useAdminMaterials } from '@/hooks/admin/useAdminCatalog';
 
 export default function AdminProductListPage() {
   const navigate = useNavigate();
-  const [products, setProducts] = useState<AdminProductOverviewResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [filterCategory, setFilterCategory] = useState<number | undefined>(undefined);
+  const [filterBrand, setFilterBrand] = useState<number | undefined>(undefined);
+  const [filterMaterial, setFilterMaterial] = useState<number | undefined>(undefined);
+  const [filterStatus, setFilterStatus] = useState<number | undefined>(undefined);
 
-  useEffect(() => {
-    productService.getAdminProducts({ page: 0, limit: 20 })
-      .then((res) => {
-        if (res.data && res.data.content && res.data.content.length > 0) {
-          setProducts(res.data.content);
-        } else {
-          setProducts(mockProducts);
-        }
-      })
-      .catch((err) => {
-        console.error('Lỗi khi tải danh sách sản phẩm:', err);
-        setProducts(mockProducts);
-      })
-      .finally(() => setIsLoading(false));
-  }, []);
+  const { categories } = useAdminCategories();
+  const { brands } = useAdminBrands();
+  const { materials } = useAdminMaterials();
+
+  const { products: apiProducts, isLoading, totalPages, totalElements } = useAdminProducts({
+    page,
+    limit: 10,
+    categoryId: filterCategory,
+    brandId: filterBrand,
+    materialId: filterMaterial,
+    status: filterStatus,
+  });
+
+  const products = apiProducts.length > 0 ? apiProducts : [];
+
+  const totalDisplayElements = apiProducts.length > 0 ? totalElements : 0;
+  const displayTotalPages = apiProducts.length > 0 ? totalPages : 0;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -75,7 +38,7 @@ export default function AdminProductListPage() {
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Quản lý Sản phẩm</h1>
           <p className="text-slate-500 mt-1">Quản lý danh mục sản phẩm, biến thể và tồn kho.</p>
         </div>
-        <Link 
+        <Link
           to="/admin/products/new"
           className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-sm shadow-indigo-600/20 transition-all active:scale-95"
         >
@@ -89,9 +52,9 @@ export default function AdminProductListPage() {
       <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
         <div className="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-4 flex-wrap">
           <div className="relative flex-1 max-w-md">
-            <input 
-              type="text" 
-              placeholder="Tìm kiếm sản phẩm..." 
+            <input
+              type="text"
+              placeholder="Tìm kiếm sản phẩm..."
               className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
             />
             <svg className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,15 +62,69 @@ export default function AdminProductListPage() {
             </svg>
           </div>
           <div className="flex items-center gap-2">
-            <select className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
+            <select
+              value={filterCategory ?? ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFilterCategory(val ? Number(val) : undefined);
+                setPage(1);
+              }}
+              className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-slate-700"
+            >
               <option value="">Tất cả danh mục</option>
-              <option value="ao-so-mi">Áo Sơ Mi</option>
-              <option value="quan-jeans">Quần Jeans</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
             </select>
-            <select className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500">
+
+            <select
+              value={filterBrand ?? ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFilterBrand(val ? Number(val) : undefined);
+                setPage(1);
+              }}
+              className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-slate-700"
+            >
+              <option value="">Tất cả thương hiệu</option>
+              {brands.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={filterMaterial ?? ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFilterMaterial(val ? Number(val) : undefined);
+                setPage(1);
+              }}
+              className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-slate-700"
+            >
+              <option value="">Tất cả chất liệu</option>
+              {materials.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={filterStatus ?? ''}
+              onChange={(e) => {
+                const val = e.target.value;
+                setFilterStatus(val ? Number(val) : undefined);
+                setPage(1);
+              }}
+              className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-slate-700"
+            >
               <option value="">Tất cả trạng thái</option>
-              <option value="ACTIVE">Đang bán</option>
-              <option value="INACTIVE">Ngừng bán</option>
+              <option value="1">Đang bán</option>
+              <option value="0">Ngừng bán</option>
             </select>
           </div>
         </div>
@@ -129,8 +146,8 @@ export default function AdminProductListPage() {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {products.map((p) => (
-                  <tr 
-                    key={p.id} 
+                  <tr
+                    key={p.id}
                     className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                     onClick={() => navigate(`/admin/products/${p.id}`)}
                   >
@@ -168,16 +185,15 @@ export default function AdminProductListPage() {
                       <div className="text-xs text-slate-400 mt-0.5">Đã bán: {p.totalSold}</div>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        p.status === 'ACTIVE' 
-                          ? 'bg-emerald-100 text-emerald-700' 
-                          : 'bg-slate-100 text-slate-600'
-                      }`}>
-                        {p.status === 'ACTIVE' ? 'Đang bán' : 'Ngừng bán'}
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${p.status === 1
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : 'bg-slate-100 text-slate-600'
+                        }`}>
+                        {p.status === 1 ? 'Đang bán' : 'Ngừng bán'}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button 
+                      <button
                         className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                         onClick={(e) => { e.stopPropagation(); navigate(`/admin/products/${p.id}`); }}
                       >
@@ -196,12 +212,37 @@ export default function AdminProductListPage() {
           </div>
         )}
         <div className="p-4 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">
-          <div>Hiển thị <span className="font-semibold text-slate-800">{products.length}</span> sản phẩm</div>
-          <div className="flex gap-1">
-            <button className="px-3 py-1 rounded-md border border-slate-200 hover:bg-slate-50" disabled>Trước</button>
-            <button className="px-3 py-1 rounded-md bg-indigo-50 text-indigo-600 font-medium">1</button>
-            <button className="px-3 py-1 rounded-md border border-slate-200 hover:bg-slate-50">Tiếp</button>
+          <div>
+            Hiển thị <span className="font-semibold text-slate-800">{products.length}</span> /{' '}
+            <span className="font-semibold text-slate-800">{totalDisplayElements}</span> sản phẩm
           </div>
+          {displayTotalPages > 1 && (
+            <div className="flex items-center gap-4">
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                Trang {page + 1} / {displayTotalPages}
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={page === 0}
+                  onClick={() => setPage((p) => p - 1)}
+                  className="rounded-xl border border-slate-200"
+                >
+                  Trước
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={page >= displayTotalPages - 1}
+                  onClick={() => setPage((p) => p + 1)}
+                  className="rounded-xl border border-slate-200"
+                >
+                  Tiếp theo
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

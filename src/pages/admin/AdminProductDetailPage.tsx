@@ -1,192 +1,44 @@
-import { useState, useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import * as productService from '@/services/admin/admin.product.service';
-import type {
-  AdminProductResponse,
-  AdminProductImageResponse,
-  AdminVariantCreateRequest,
-} from '@/types/admin.types';
+import type { AdminProductImageResponse } from '@/types/admin.types';
 import { Spinner } from '@/components/ui';
+import { useAdminProductDetail } from '@/hooks/admin/useAdminProducts';
+import { useAdminCategories, useAdminBrands, useAdminMaterials } from '@/hooks/admin/useAdminCatalog';
+import { useAdminAttributes } from '@/hooks/admin/useAdminAttributes';
 
-// ── Types ─────────────────────────────────────────────
-interface NewVariantRow {
-  key: number;
-  label: string;      // Người dùng nhập tên phân loại vd: "Trắng - M"
-  stock: number;
-  overrideSalePrice: number | null;
-}
-
-interface PreviewImage {
-  key: number;
-  file: File;
-  previewUrl: string;
-}
-
-// ── Mock data ─────────────────────────────────────────
-const mockProductDetail: AdminProductResponse = {
-  id: 1,
-  name: 'Áo Sơ Mi Nam Cổ Trụ Phối Nút Vạt Bầu',
-  description:
-    'Áo sơ mi nam chất liệu cotton cao cấp, thấm hút mồ hôi tốt. Kiểu dáng thời trang, phom ôm vừa phải (regular fit), dễ dàng phối đồ đi làm hoặc dạo phố.',
-  brand: { id: 1, name: 'Zara', status: 1 },
-  category: { id: 1, name: 'Áo Sơ Mi', status: 1 },
-  material: { id: 1, name: 'Cotton 100%', status: 1 },
-  salePrice: 250000,
-  comparePrice: 350000,
-  status: 'ACTIVE',
-  images: [
-    { id: 1, name: 'img1.jpg', alt: 'Mặt trước áo' },
-    { id: 2, name: 'img2.jpg', alt: 'Mặt sau áo' },
-  ],
-  variants: [
-    {
-      id: 1, sku: 'SM-Z-01-M', stock: 50, countSold: 10, overrideSalePrice: null,
-      optionValues: [{ id: 1, attributeName: 'Màu sắc', value: 'Trắng' }, { id: 2, attributeName: 'Kích cỡ', value: 'M' }],
-    },
-    {
-      id: 2, sku: 'SM-Z-01-L', stock: 30, countSold: 20, overrideSalePrice: null,
-      optionValues: [{ id: 1, attributeName: 'Màu sắc', value: 'Trắng' }, { id: 3, attributeName: 'Kích cỡ', value: 'L' }],
-    },
-    {
-      id: 3, sku: 'SM-Z-02-M', stock: 70, countSold: 15, overrideSalePrice: null,
-      optionValues: [{ id: 4, attributeName: 'Màu sắc', value: 'Đen' }, { id: 2, attributeName: 'Kích cỡ', value: 'M' }],
-    },
-  ],
-  createdAt: '2023-12-01T10:00:00Z',
-  updatedAt: '2023-12-10T15:00:00Z',
-};
-
-// ── Component ──────────────────────────────────────────
 export default function AdminProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const isNew = id === 'new';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [isLoading, setIsLoading] = useState(!isNew);
-  const [isSaving, setIsSaving] = useState(false);
-  const [product, setProduct] = useState<Partial<AdminProductResponse>>(
-    isNew ? { status: 'ACTIVE', salePrice: 0 } : {}
-  );
+  const { categories } = useAdminCategories();
+  const { brands } = useAdminBrands();
+  const { materials } = useAdminMaterials();
+  const { attributes } = useAdminAttributes();
 
-  // Ảnh mới chuẩn bị upload (chỉ dùng khi tạo/sửa)
-  const [previewImages, setPreviewImages] = useState<PreviewImage[]>([]);
+  const {
+    isNew,
+    isLoading,
+    isSaving,
+    product: apiProduct,
+    setProduct,
+    previewImages,
+    newVariants,
+    handleFileChange,
+    removePreviewImage,
+    addVariantRow,
+    updateVariantRow,
+    removeVariantRow,
+    editedVariants,
+    updateExistingVariant,
+    deleteExistingVariant,
+    saveProduct,
+  } = useAdminProductDetail(id);
 
-  // Variants mới (dùng khi tạo mới hoặc thêm thêm variant vào sản phẩm cũ)
-  const [newVariants, setNewVariants] = useState<NewVariantRow[]>([]);
-  const variantKeyRef = useRef(0);
+  const product = apiProduct;
 
-  useEffect(() => {
-    if (isNew) return;
-    setIsLoading(true);
-    productService
-      .getAdminProductById(Number(id))
-      .then((res) => {
-        if (res.data) setProduct(res.data);
-        else setProduct(mockProductDetail);
-      })
-      .catch(() => setProduct(mockProductDetail))
-      .finally(() => setIsLoading(false));
-  }, [id, isNew]);
-
-  // Dọn dẹp blob URL khi component unmount
-  useEffect(() => {
-    return () => {
-      previewImages.forEach((p) => URL.revokeObjectURL(p.previewUrl));
-    };
-  }, [previewImages]);
-
-  // ── Handlers ──
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    const newPreviews: PreviewImage[] = files.map((file) => ({
-      key: Date.now() + Math.random(),
-      file,
-      previewUrl: URL.createObjectURL(file),
-    }));
-    setPreviewImages((prev) => [...prev, ...newPreviews]);
-    // Reset input để có thể chọn cùng file lại nếu cần
-    e.target.value = '';
-  };
-
-  const removePreviewImage = (key: number) => {
-    setPreviewImages((prev) => {
-      const found = prev.find((p) => p.key === key);
-      if (found) URL.revokeObjectURL(found.previewUrl);
-      return prev.filter((p) => p.key !== key);
-    });
-  };
-
-  const addVariantRow = () => {
-    variantKeyRef.current += 1;
-    setNewVariants((prev) => [
-      ...prev,
-      { key: variantKeyRef.current, label: '', stock: 0, overrideSalePrice: null },
-    ]);
-  };
-
-  const updateVariantRow = (key: number, field: keyof NewVariantRow, value: string | number | null) => {
-    setNewVariants((prev) =>
-      prev.map((v) => (v.key === key ? { ...v, [field]: value } : v))
-    );
-  };
-
-  const removeVariantRow = (key: number) => {
-    setNewVariants((prev) => prev.filter((v) => v.key !== key));
-  };
-
-  const buildCreateRequest = (): AdminVariantCreateRequest[] => {
-    return newVariants
-      .filter((v) => v.label.trim() !== '')
-      .map((v) => ({
-        stock: v.stock,
-        overrideSalePrice: v.overrideSalePrice,
-        optionValueIds: [],   // TODO: map từ label -> optionValueIds khi có API attribute
-      }));
-  };
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      const files = previewImages.map((p) => p.file);
-      if (isNew) {
-        await productService.createAdminProduct(
-          {
-            name: product.name || '',
-            description: product.description,
-            salePrice: product.salePrice || 0,
-            comparePrice: product.comparePrice || 0,
-            brandId: product.brand?.id ?? null,
-            categoryId: product.category?.id ?? null,
-            materialId: product.material?.id ?? null,
-            variants: buildCreateRequest(),
-          },
-          files
-        );
-      } else {
-        await productService.updateAdminProduct(
-          Number(id),
-          {
-            name: product.name || '',
-            description: product.description,
-            salePrice: product.salePrice || 0,
-            comparePrice: product.comparePrice || 0,
-            brandId: product.brand?.id ?? null,
-            categoryId: product.category?.id ?? null,
-            materialId: product.material?.id ?? null,
-            variantCreates: buildCreateRequest(),
-          },
-          files
-        );
-      }
-      navigate('/admin/products');
-    } catch (err) {
-      console.error('Lỗi lưu sản phẩm:', err);
-      // Giả lập thành công khi API lỗi (dev mode)
-      navigate('/admin/products');
-    } finally {
-      setIsSaving(false);
-    }
+  const handleSave = () => {
+    saveProduct(() => navigate('/admin/products'));
   };
 
   if (isLoading)
@@ -365,33 +217,63 @@ export default function AdminProductDetailPage() {
                       <th className="px-4 py-3">SKU</th>
                       <th className="px-4 py-3 text-right">Tồn kho</th>
                       <th className="px-4 py-3 text-right">Giá riêng (VNĐ)</th>
+                      <th className="px-4 py-3"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {product.variants.map((v) => (
-                      <tr key={v.id} className="hover:bg-slate-50">
-                        <td className="px-4 py-3 font-medium text-slate-700">
-                          {v.optionValues.map((o) => o.value).join(' - ')}
-                        </td>
-                        <td className="px-4 py-3 text-slate-500">{v.sku}</td>
-                        <td className="px-4 py-3 text-right">
-                          <input
-                            type="number"
-                            defaultValue={v.stock}
-                            min={0}
-                            className="w-20 text-right border border-slate-200 rounded px-2 py-1 focus:border-indigo-500 focus:outline-none"
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <input
-                            type="number"
-                            defaultValue={v.overrideSalePrice || ''}
-                            placeholder="Mặc định"
-                            className="w-28 text-right border border-slate-200 rounded px-2 py-1 focus:border-indigo-500 focus:outline-none"
-                          />
-                        </td>
-                      </tr>
-                    ))}
+                    {product.variants.map((v) => {
+                      const edited = editedVariants.get(v.id);
+                      const currentStock = edited?.stock ?? v.stock;
+                      const currentPrice = edited?.overrideSalePrice !== undefined
+                        ? edited.overrideSalePrice
+                        : v.overrideSalePrice;
+                      return (
+                        <tr key={v.id} className="hover:bg-slate-50">
+                          <td className="px-4 py-3 font-medium text-slate-700">
+                            {v.optionValues.map((o) => o.value).join(' - ')}
+                          </td>
+                          <td className="px-4 py-3 text-slate-500">{v.sku}</td>
+                          <td className="px-4 py-3 text-right">
+                            <input
+                              type="number"
+                              value={currentStock ?? 0}
+                              min={0}
+                              onChange={(e) =>
+                                updateExistingVariant(v.id, 'stock', Number(e.target.value))
+                              }
+                              className="w-20 text-right border border-slate-200 rounded px-2 py-1 focus:border-indigo-500 focus:outline-none"
+                            />
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            <input
+                              type="number"
+                              value={currentPrice ?? ''}
+                              placeholder="Mặc định"
+                              onChange={(e) =>
+                                updateExistingVariant(
+                                  v.id,
+                                  'overrideSalePrice',
+                                  e.target.value === '' ? null : Number(e.target.value)
+                                )
+                              }
+                              className="w-28 text-right border border-slate-200 rounded px-2 py-1 focus:border-indigo-500 focus:outline-none"
+                            />
+                          </td>
+                          <td className="px-4 py-3">
+                            <button
+                              type="button"
+                              onClick={() => deleteExistingVariant(v.id)}
+                              title="Xóa biến thể"
+                              className="text-slate-400 hover:text-red-500 transition-colors p-1 rounded"
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -403,37 +285,61 @@ export default function AdminProductDetailPage() {
                 <div className="px-4 py-2 bg-indigo-50 text-xs font-semibold text-indigo-600 uppercase tracking-wide">
                   Biến thể mới
                 </div>
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-slate-50 text-slate-500 font-semibold border-b border-slate-200 text-xs uppercase">
-                    <tr>
-                      <th className="px-4 py-3 w-2/5">Tên phân loại</th>
-                      <th className="px-4 py-3 text-right">Tồn kho</th>
-                      <th className="px-4 py-3 text-right">Giá riêng (VNĐ)</th>
-                      <th className="px-4 py-3 w-10"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {newVariants.map((v) => (
-                      <tr key={v.key} className="hover:bg-slate-50">
-                        <td className="px-4 py-3">
-                          <input
-                            type="text"
-                            value={v.label}
-                            onChange={(e) => updateVariantRow(v.key, 'label', e.target.value)}
-                            placeholder="vd: Trắng - M"
-                            className="w-full border border-slate-200 rounded px-2 py-1.5 focus:border-indigo-500 focus:outline-none text-slate-700 placeholder:text-slate-300"
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-right">
+                <div className="divide-y divide-slate-100">
+                  {newVariants.map((v) => (
+                    <div key={v.key} className="p-4 flex flex-col gap-3 hover:bg-slate-50">
+                      {/* Attribute selects — one per attribute */}
+                      <div className="flex flex-wrap gap-3">
+                        {attributes.map((attr) => {
+                          const selectedId = v.optionValueIds.find((id) =>
+                            attr.values.some((val) => val.id === id)
+                          );
+                          return (
+                            <div key={attr.id} className="flex-1 min-w-[140px]">
+                              <label className="block text-xs font-medium text-slate-500 mb-1">
+                                {attr.name}
+                              </label>
+                              <select
+                                value={selectedId ?? ''}
+                                onChange={(e) => {
+                                  const chosen = e.target.value ? Number(e.target.value) : null;
+                                  // Replace the old value for this attribute (if any) with the new one
+                                  const withoutThisAttr = v.optionValueIds.filter(
+                                    (id) => !attr.values.some((val) => val.id === id)
+                                  );
+                                  updateVariantRow(
+                                    v.key,
+                                    'optionValueIds',
+                                    chosen ? [...withoutThisAttr, chosen] : withoutThisAttr
+                                  );
+                                }}
+                                className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm focus:border-indigo-500 focus:outline-none text-slate-700"
+                              >
+                                <option value="">-- Chọn {attr.name} --</option>
+                                {attr.values.map((val) => (
+                                  <option key={val.id} value={val.id}>
+                                    {val.value}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      {/* Stock & price */}
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-slate-500 mb-1">Tồn kho</label>
                           <input
                             type="number"
                             value={v.stock}
                             min={0}
                             onChange={(e) => updateVariantRow(v.key, 'stock', Number(e.target.value))}
-                            className="w-20 text-right border border-slate-200 rounded px-2 py-1.5 focus:border-indigo-500 focus:outline-none"
+                            className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm focus:border-indigo-500 focus:outline-none"
                           />
-                        </td>
-                        <td className="px-4 py-3 text-right">
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-xs font-medium text-slate-500 mb-1">Giá riêng (VNĐ)</label>
                           <input
                             type="number"
                             value={v.overrideSalePrice ?? ''}
@@ -445,10 +351,10 @@ export default function AdminProductDetailPage() {
                                 e.target.value === '' ? null : Number(e.target.value)
                               )
                             }
-                            className="w-28 text-right border border-slate-200 rounded px-2 py-1.5 focus:border-indigo-500 focus:outline-none"
+                            className="w-full border border-slate-200 rounded px-2 py-1.5 text-sm focus:border-indigo-500 focus:outline-none"
                           />
-                        </td>
-                        <td className="px-4 py-3 text-center">
+                        </div>
+                        <div className="pt-5">
                           <button
                             type="button"
                             onClick={() => removeVariantRow(v.key)}
@@ -458,11 +364,11 @@ export default function AdminProductDetailPage() {
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                           </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -481,12 +387,12 @@ export default function AdminProductDetailPage() {
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 space-y-4">
             <h2 className="text-lg font-bold text-slate-800">Trạng thái</h2>
             <select
-              value={product.status || 'ACTIVE'}
-              onChange={(e) => setProduct({ ...product, status: e.target.value })}
+              value={product.status}
+              onChange={(e) => setProduct({ ...product, status: Number(e.target.value) })}
               className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
             >
-              <option value="ACTIVE">🟢 Đang bán (Active)</option>
-              <option value="INACTIVE">⚪ Ngừng bán (Inactive)</option>
+              <option value={1}>Đang bán</option>
+              <option value={0}>Ngừng bán</option>
             </select>
           </div>
 
@@ -524,34 +430,64 @@ export default function AdminProductDetailPage() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Danh mục</label>
               <select
-                defaultValue={product.category?.id || ''}
+                value={product.category?.id || ''}
+                onChange={(e) => {
+                  const id = e.target.value ? Number(e.target.value) : null;
+                  setProduct({
+                    ...product,
+                    category: id ? { id, name: categories.find((c) => c.id === id)?.name || '', status: 1 } : null,
+                  });
+                }}
                 className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-700"
               >
                 <option value="">-- Chọn danh mục --</option>
-                <option value="1">Áo Sơ Mi</option>
-                <option value="2">Quần Jeans</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Thương hiệu</label>
               <select
-                defaultValue={product.brand?.id || ''}
+                value={product.brand?.id || ''}
+                onChange={(e) => {
+                  const id = e.target.value ? Number(e.target.value) : null;
+                  setProduct({
+                    ...product,
+                    brand: id ? { id, name: brands.find((b) => b.id === id)?.name || '', status: 1 } : null,
+                  });
+                }}
                 className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-700"
               >
                 <option value="">-- Chọn thương hiệu --</option>
-                <option value="1">Zara</option>
-                <option value="2">Levi's</option>
+                {brands.map((b) => (
+                  <option key={b.id} value={b.id}>
+                    {b.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Chất liệu</label>
               <select
-                defaultValue={product.material?.id || ''}
+                value={product.material?.id || ''}
+                onChange={(e) => {
+                  const id = e.target.value ? Number(e.target.value) : null;
+                  setProduct({
+                    ...product,
+                    material: id ? { id, name: materials.find((m) => m.id === id)?.name || '', status: 1 } : null,
+                  });
+                }}
                 className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-slate-700"
               >
                 <option value="">-- Chọn chất liệu --</option>
-                <option value="1">Cotton 100%</option>
-                <option value="2">Denim</option>
+                {materials.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

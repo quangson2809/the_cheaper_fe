@@ -100,7 +100,7 @@ export interface AdminProductOverviewResponse {
   categoryName: string | null;
   salePrice: number;
   comparePrice: number | null;
-  status: string;
+  status: number;
   thumbnailUrl: string | null;
   createdAt: string;
   totalStock: number;
@@ -116,7 +116,7 @@ export interface AdminProductResponse {
   material: AdminMaterialResponse | null;
   salePrice: number;
   comparePrice: number | null;
-  status: string;
+  status: number;
   images: AdminProductImageResponse[];
   variants: AdminVariantResponse[];
   createdAt: string;

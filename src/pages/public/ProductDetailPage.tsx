@@ -35,7 +35,6 @@ export default function ProductDetailPage() {
     }
   }, [product]);
 
-  // Extract all unique attributes from all variants
   // { "Màu sắc": ["Đỏ", "Xanh"], "Kích cỡ": ["S", "M", "L"] }
   const availableAttributes = useMemo(() => {
     if (!product) return {};
