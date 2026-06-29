@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as accountService from '@/services/admin/admin.account.service';
 import type { AdminAccountResponse, AdminUserFilterRequest, AdminCreateAdminRequest } from '@/types/admin.types';
+import type { Page } from '@/types/api.types';
 
 const DEFAULT_FILTERS: AdminUserFilterRequest = {
   page: 1,
@@ -10,11 +11,10 @@ const DEFAULT_FILTERS: AdminUserFilterRequest = {
 };
 
 export function useAdminAccounts(initialFilters: AdminUserFilterRequest = DEFAULT_FILTERS) {
-  const [accounts, setAccounts] = useState<AdminAccountResponse[]>([]);
+  const [data, setData] = useState<Page<AdminAccountResponse> | null>(null);
   const [loading, setLoading] = useState(true);
-  const [totalPages, setTotalPages] = useState(1);
   const [filters, setFilters] = useState<AdminUserFilterRequest>(initialFilters);
-  
+
   // Creation state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -23,12 +23,10 @@ export function useAdminAccounts(initialFilters: AdminUserFilterRequest = DEFAUL
     setLoading(true);
     try {
       const res = await accountService.getAccounts(filters);
-      if (res.data) {
-        setAccounts(res.data.content);
-        setTotalPages(res.data.totalPages);
-      }
+      setData(res.data);
     } catch (error) {
       console.error('Accounts API failed:', error);
+      setData(null);
     } finally {
       setLoading(false);
     }
@@ -38,13 +36,13 @@ export function useAdminAccounts(initialFilters: AdminUserFilterRequest = DEFAUL
     void fetchAccounts();
   }, [fetchAccounts]);
 
-  const toggleStatus = async (id: number) => {
+  const updateStatus = async (id: number, status: number): Promise<boolean> => {
     try {
-      await accountService.toggleAccountStatus(id);
+      await accountService.updateAccountStatus(id, status);
       await fetchAccounts();
       return true;
     } catch (error) {
-      console.error('Toggle status API failed:', error);
+      console.error('Update status API failed:', error);
       return false;
     }
   };
@@ -68,14 +66,14 @@ export function useAdminAccounts(initialFilters: AdminUserFilterRequest = DEFAUL
   const resetFilters = () => setFilters(DEFAULT_FILTERS);
 
   return {
-    accounts,
+    accounts: data?.content || [],
+    totalPages: data?.totalPages || 1,
     loading,
-    totalPages,
     filters,
     setFilters,
     resetFilters,
     refresh: fetchAccounts,
-    toggleStatus,
+    updateStatus,
     createAdmin,
     isSubmitting,
     submitError,

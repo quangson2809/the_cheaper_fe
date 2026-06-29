@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Button, Input, Badge, Select, Modal, Spinner } from '@/components/ui';
-import { EmptyState, Pagination } from '@/components/common';
+import { EmptyState } from '@/components/common';
 import { useAdminAccounts } from '@/hooks/admin/useAdminAccounts';
 import type { AdminAccountResponse } from '@/types/admin.types';
 
@@ -12,7 +12,7 @@ export default function AdminAccountListPage() {
     filters,
     setFilters,
     resetFilters,
-    toggleStatus,
+    updateStatus,
     createAdmin,
     isSubmitting,
     submitError,
@@ -34,12 +34,13 @@ export default function AdminAccountListPage() {
     setIsModalOpen(true);
   };
 
-  const handleToggleStatus = async (id: number) => {
+  const handleUpdateStatus = async (id: number, currentStatus: number) => {
     if (!confirm('Bạn có chắc chắn muốn thay đổi trạng thái tài khoản này?')) return;
-    await toggleStatus(id);
+    const newStatus = Number(currentStatus) === 1 ? 0 : 1;
+    await updateStatus(id, newStatus);
   };
 
-  const handleSubmitCreate = async (e: React.FormEvent) => {
+  const handleSubmitCreate = async (e: FormEvent) => {
     e.preventDefault();
     const success = await createAdmin(formData);
     if (success && !submitError) {
@@ -65,11 +66,11 @@ export default function AdminAccountListPage() {
           <Select
             label="Trạng thái"
             options={[
-              { value: 'ACTIVE', label: 'Đang hoạt động' },
-              { value: 'LOCKED', label: 'Đã khóa' },
+              { value: 1, label: 'Đang hoạt động' },
+              { value: 0, label: 'Đã khóa' },
             ]}
             value={filters.status ?? ''}
-            onChange={(e) => setFilters({ ...filters, status: e.target.value as any, page: 1 })}
+            onChange={(e) => setFilters({ ...filters, status: Number(e.target.value), page: 1 })}
           />
         </div>
         <div className="w-full sm:w-48">
@@ -89,15 +90,15 @@ export default function AdminAccountListPage() {
       </div>
 
       {/* Data Table */}
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 min-h-[400px]">
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 min-h-[400px] overflow-hidden">
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <Spinner size="lg" />
           </div>
-        ) : accounts.length === 0 ? (
+        ) : !accounts || accounts.length === 0 ? (
           <div className="py-20">
-            <EmptyState 
-              title="Không tìm thấy tài khoản nào" 
+            <EmptyState
+              title="Không tìm thấy tài khoản nào"
               description="Thử thay đổi bộ lọc hoặc thêm tài khoản mới."
             />
           </div>
@@ -106,54 +107,51 @@ export default function AdminAccountListPage() {
             <table className="w-full text-left text-sm text-slate-600">
               <thead className="bg-slate-50 text-slate-700 text-xs uppercase font-semibold">
                 <tr>
-                  <th className="px-6 py-4 rounded-tl-3xl">Người dùng</th>
-                  <th className="px-6 py-4">Liên hệ</th>
-                  <th className="px-6 py-4 text-center">Vai trò</th>
-                  <th className="px-6 py-4 text-center">Trạng thái</th>
-                  <th className="px-6 py-4 rounded-tr-3xl text-right">Thao tác</th>
+                  <th className="px-4 sm:px-6 py-4">Người dùng</th>
+                  <th className="px-4 sm:px-6 py-4 hidden sm:table-cell">Liên hệ</th>
+                  <th className="px-4 sm:px-6 py-4 text-center">Vai trò</th>
+                  <th className="px-4 sm:px-6 py-4 text-center hidden sm:table-cell">Trạng thái</th>
+                  <th className="px-4 sm:px-6 py-4 text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {accounts.map((acc: AdminAccountResponse) => (
+                {(accounts || []).map((acc: AdminAccountResponse) => (
                   <tr key={acc.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-6 py-4">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold shrink-0">
                           {acc.name.charAt(0)}
                         </div>
-                        <div>
-                          <p className="font-bold text-slate-800">{acc.name}</p>
+                        <div className="min-w-0">
+                          <p className="font-bold text-slate-800 truncate">{acc.name}</p>
                           <p className="text-xs text-slate-400">#{acc.id}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 hidden sm:table-cell">
                       <div className="space-y-0.5">
-                        <p className="text-slate-700 font-medium">{acc.email}</p>
+                        <p className="text-slate-700 font-medium text-sm truncate max-w-[160px]">{acc.email}</p>
                         <p className="text-xs text-slate-500">{acc.phone || 'Chưa có SĐT'}</p>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-center">
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-center">
                       <Badge variant={acc.role === 'ADMIN' ? 'error' : 'primary'}>
                         {acc.role === 'ADMIN' ? 'Quản trị' : 'Khách hàng'}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <Badge variant={acc.status === 'ACTIVE' ? 'success' : 'neutral'}>
-                        {acc.status === 'ACTIVE' ? 'Hoạt động' : 'Đã khóa'}
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-center hidden sm:table-cell">
+                      <Badge variant={Number(acc.status) === 1 ? 'success' : 'neutral'}>
+                        {Number(acc.status) === 1 ? 'Hoạt động' : 'Đã khóa'}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <button 
-                        onClick={() => handleToggleStatus(acc.id)}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                          acc.status === 'ACTIVE' 
-                            ? 'text-red-500 hover:bg-red-50' 
-                            : 'text-emerald-600 hover:bg-emerald-50'
-                        }`}
+                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-right">
+                      <Button
+                        onClick={() => handleUpdateStatus(acc.id, Number(acc.status))}
+                        variant={Number(acc.status) === 1 ? 'danger' : 'success'}
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold"
                       >
-                        {acc.status === 'ACTIVE' ? 'Khóa' : 'Mở khóa'}
-                      </button>
+                        {Number(acc.status) === 1 ? 'Khóa' : 'Mở khóa'}
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -161,17 +159,43 @@ export default function AdminAccountListPage() {
             </table>
           </div>
         )}
+        
+        {/* Pagination Footer */}
+        {!loading && accounts && accounts.length > 0 && (
+          <div className="p-4 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">
+            <div>
+              Hiển thị <span className="font-semibold text-slate-800">{accounts.length}</span> tài khoản
+            </div>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-4">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                  Trang {filters.page ?? 1} / {totalPages}
+                </span>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={(filters.page ?? 1) === 1}
+                    onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) - 1 })}
+                    className="rounded-xl border border-slate-200"
+                  >
+                    Trước
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={(filters.page ?? 1) >= totalPages}
+                    onClick={() => setFilters({ ...filters, page: (filters.page ?? 1) + 1 })}
+                    className="rounded-xl border border-slate-200"
+                  >
+                    Tiếp theo
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
-
-      {totalPages > 1 && (
-        <div className="flex justify-center mt-6">
-          <Pagination
-            currentPage={filters.page || 1}
-            totalPages={totalPages}
-            onPageChange={(page) => setFilters({ ...filters, page })}
-          />
-        </div>
-      )}
 
       {/* Add Admin Modal */}
       <Modal isOpen={isModalOpen} onClose={() => !isSubmitting && setIsModalOpen(false)} title="Tạo tài khoản Quản trị">

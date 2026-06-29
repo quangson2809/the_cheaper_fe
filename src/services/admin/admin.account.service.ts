@@ -22,7 +22,11 @@ export async function createAdmin(data: AdminCreateAdminRequest): Promise<ApiRes
   return res.data;
 }
 
-export async function toggleAccountStatus(id: number): Promise<ApiResponse<AdminAccountResponse>> {
-  const res = await axiosClient.patch<ApiResponse<AdminAccountResponse>>(EP.ADMIN_ACCOUNT_BY_ID(id));
+export async function updateAccountStatus(id: number, status: number): Promise<ApiResponse<AdminAccountResponse>> {
+  const res = await axiosClient.put<ApiResponse<AdminAccountResponse>>(
+    EP.ADMIN_ACCOUNT_STATUS(id),
+    null,
+    { params: { status } }
+  );
   return res.data;
 }

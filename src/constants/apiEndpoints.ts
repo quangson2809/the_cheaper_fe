@@ -42,6 +42,7 @@ export const PAYMENT_METHODS = '/api/payment-methods';
 // ── Admin — Accounts ──────────────────────────────────
 export const ADMIN_ACCOUNTS = '/api/admin/accounts';
 export const ADMIN_ACCOUNT_BY_ID = (id: number) => `/api/admin/accounts/${id}`;
+export const ADMIN_ACCOUNT_STATUS = (id: number) => `/api/admin/accounts/${id}/status`;
 
 // ── Admin — Brands ────────────────────────────────────
 export const ADMIN_BRANDS = '/api/admin/brands';
@@ -73,7 +74,7 @@ export const ADMIN_PAYMENT_METHODS = '/api/admin/payment-methods';
 export const ADMIN_PAYMENT_METHOD_BY_ID = (id: number) => `/api/admin/payment-methods/${id}`;
 
 // ── Admin — Dashboard ─────────────────────────────────
-export const ADMIN_DASHBOARD = '/api/admin/dashboard';
-export const ADMIN_DASHBOARD_MONTHLY_REVENUE = '/api/admin/dashboard/monthly-revenue';
-export const ADMIN_DASHBOARD_MONTHLY_ORDERS = '/api/admin/dashboard/monthly-orders';
-export const ADMIN_DASHBOARD_ORDER_RATIO = '/api/admin/dashboard/order-ratio';
+export const ADMIN_DASHBOARD_STATS = '/api/admin/stats';
+export const ADMIN_DASHBOARD_MONTHLY_REVENUE = '/api/admin/monthly-revenue';
+export const ADMIN_DASHBOARD_MONTHLY_QUANTITY = '/api/admin/monthly-quantity';
+export const ADMIN_DASHBOARD_ORDER_STATUS = '/api/admin/order-status';
