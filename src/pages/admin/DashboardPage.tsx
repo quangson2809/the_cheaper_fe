@@ -17,40 +17,34 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Đảm bảo gọi đủ 4 API, nếu API nào lỗi thì trả về Promise reject và xử lý riêng lẻ
     Promise.allSettled([
-      dashboardService.getDashboard(),
-      dashboardService.getMonthlyRevenue(),
-      dashboardService.getMonthlyOrders(),
-      dashboardService.getOrderStatusRatio()
+      dashboardService.getDashboardStats().catch(err => { console.error('Stats Error'); throw err; }),
+      dashboardService.getMonthlyRevenue().catch(err => { console.error('Revenue Error'); throw err; }),
+      dashboardService.getMonthlyQuantity().catch(err => { console.error('Quantity Error'); throw err; }),
+      dashboardService.getOrderStatus().catch(err => { console.error('Status Error'); throw err; })
     ]).then(([dashRes, revRes, qtyRes, statusRes]) => {
-      // Dashboard Stats
-      if (dashRes.status === 'fulfilled' && dashRes.value.data) {
-        setData(dashRes.value.data);
-      }
 
-      // Monthly Revenue
-      if (revRes.status === 'fulfilled' && revRes.value.data) {
-        setRevenue(revRes.value.data);
+      if (dashRes.status === 'fulfilled') {
+        const payload = dashRes.value.data !== undefined ? dashRes.value.data : dashRes.value;
+        if (payload) setData(payload as any);
       }
-
-      // Monthly Quantity
-      if (qtyRes.status === 'fulfilled' && qtyRes.value.data) {
-        setQuantity(qtyRes.value.data);
+      if (revRes.status === 'fulfilled') {
+        const payload = revRes.value.data !== undefined ? revRes.value.data : revRes.value;
+        if (payload) setRevenue(payload as any);
       }
-
-      // Order Status
-      if (statusRes.status === 'fulfilled' && statusRes.value.data) {
-        setOrderStatus(statusRes.value.data);
+      if (qtyRes.status === 'fulfilled') {
+        const payload = qtyRes.value.data !== undefined ? qtyRes.value.data : qtyRes.value;
+        if (payload) setQuantity(payload as any);
+      }
+      if (statusRes.status === 'fulfilled') {
+        const payload = statusRes.value.data !== undefined ? statusRes.value.data : statusRes.value;
+        if (payload) setOrderStatus(payload as any);
       }
     }).finally(() => setIsLoading(false));
   }, []);
 
   if (isLoading) return <div className="flex justify-center py-32"><Spinner size="lg" /></div>;
-  if (!data) return (
-    <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-200">
-      <p className="text-slate-400">Không có dữ liệu tổng quan.</p>
-    </div>
-  );
 
   const maxRevenue = revenue.length > 0 ? Math.max(...revenue.map(r => r.revenue), 1) : 1;
   const maxQuantity = quantity.length > 0 ? Math.max(...quantity.map(q => q.quantity), 1) : 1;
@@ -60,7 +54,10 @@ export default function DashboardPage() {
     'PROCESSING': 'bg-blue-400',
     'SHIPPED': 'bg-indigo-400',
     'DELIVERED': 'bg-emerald-400',
-    'CANCELLED': 'bg-red-400'
+    'CANCELLED': 'bg-red-400',
+    'CANCELED': 'bg-red-400',
+    'REFUNDED': 'bg-slate-400',
+    'SHIPPING': 'bg-indigo-300'
   };
 
   return (
@@ -78,7 +75,7 @@ export default function DashboardPage() {
           <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-indigo-50 opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
           <div>
             <p className="text-slate-500 font-medium mb-2 text-sm uppercase tracking-wider">Tổng doanh thu</p>
-            <p className="text-4xl font-black text-indigo-600">{formatCurrency(data.totalRevenue)}</p>
+            <p className="text-4xl font-black text-indigo-600">{formatCurrency(data?.totalRevenue || 0)}</p>
           </div>
           <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-500">
             <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -89,7 +86,7 @@ export default function DashboardPage() {
           <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-blue-50 opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
           <div>
             <p className="text-slate-500 font-medium mb-2 text-sm uppercase tracking-wider">Tổng đơn hàng</p>
-            <p className="text-4xl font-black text-slate-800">{data.totalOrders.toLocaleString()}</p>
+            <p className="text-4xl font-black text-slate-800">{data?.totalOrders?.toLocaleString() || 0}</p>
           </div>
           <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-500">
             <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
@@ -100,7 +97,7 @@ export default function DashboardPage() {
           <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-teal-50 opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
           <div>
             <p className="text-slate-500 font-medium mb-2 text-sm uppercase tracking-wider">Tổng người dùng</p>
-            <p className="text-4xl font-black text-slate-800">{data.totalUsers.toLocaleString()}</p>
+            <p className="text-4xl font-black text-slate-800">{data?.totalUsers?.toLocaleString() || 0}</p>
           </div>
           <div className="w-14 h-14 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-500">
             <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
@@ -115,7 +112,7 @@ export default function DashboardPage() {
           {revenue.length > 0 ? (
             <div className="h-64 flex items-end justify-between gap-2">
               {revenue.map(item => (
-                <div key={item.month} className="relative flex flex-col items-center flex-1 group">
+                <div key={item.month} className="relative flex flex-col items-center flex-1 group h-full justify-end">
                   <div
                     className="w-full bg-indigo-200 rounded-t-md group-hover:bg-indigo-400 transition-colors cursor-pointer"
                     style={{ height: `${(item.revenue / maxRevenue) * 100}%`, minHeight: '4px' }}
@@ -141,7 +138,7 @@ export default function DashboardPage() {
           {quantity.length > 0 ? (
             <div className="h-64 flex items-end justify-between gap-2">
               {quantity.map(item => (
-                <div key={item.month} className="relative flex flex-col items-center flex-1 group">
+                <div key={item.month} className="relative flex flex-col items-center flex-1 group h-full justify-end">
                   <div
                     className="w-full bg-teal-200 rounded-t-md group-hover:bg-teal-400 transition-colors cursor-pointer"
                     style={{ height: `${(item.quantity / maxQuantity) * 100}%`, minHeight: '4px' }}
@@ -206,8 +203,8 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {data.topProducts && data.topProducts.map((p, index) => {
-                  const percentage = data.totalRevenue > 0 ? (p.totalRevenue / data.totalRevenue) * 100 : 0;
+                {data?.topProducts && data.topProducts.map((p, index) => {
+                  const percentage = (data.totalRevenue || 0) > 0 ? (p.totalRevenue / data.totalRevenue) * 100 : 0;
                   return (
                     <tr key={p.productId} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-6 py-4">
@@ -240,7 +237,7 @@ export default function DashboardPage() {
                     </tr>
                   );
                 })}
-                {(!data.topProducts || data.topProducts.length === 0) && (
+                {(!data?.topProducts || data.topProducts.length === 0) && (
                   <tr>
                     <td colSpan={4} className="text-center py-12 text-slate-500">
                       Chưa có dữ liệu sản phẩm bán chạy.
@@ -255,3 +252,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

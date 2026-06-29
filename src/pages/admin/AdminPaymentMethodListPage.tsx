@@ -5,11 +5,11 @@ import type { PaymentMethodResponse } from '@/types/paymentMethod.types';
 
 export default function AdminPaymentMethodListPage() {
   const { paymentMethods, isLoading, addPaymentMethod, updatePaymentMethod, deletePaymentMethod } = useAdminPaymentMethods();
-  
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  
+
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethodResponse | null>(null);
   const [formData, setFormData] = useState({ name: '', code: '', status: 1 });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,7 +19,7 @@ export default function AdminPaymentMethodListPage() {
     setFormData({ name: '', code: '', status: 1 });
     setIsAddModalOpen(true);
   };
-  
+
   const handleAddSubmit = async () => {
     if (!formData.name.trim() || !formData.code.trim()) return;
     setIsSubmitting(true);
@@ -31,14 +31,14 @@ export default function AdminPaymentMethodListPage() {
   // Handlers for Edit
   const handleOpenEdit = (method: PaymentMethodResponse) => {
     setSelectedMethod(method);
-    setFormData({ name: method.name, code: method.code, status: method.status});
+    setFormData({ name: method.name, code: method.code, status: method.status });
     setIsEditModalOpen(true);
   };
 
   const handleEditSubmit = async () => {
     if (!selectedMethod || !formData.name.trim() || !formData.code.trim()) return;
     setIsSubmitting(true);
-    await updatePaymentMethod(selectedMethod.id, {name: formData.name, code: formData.code, status: formData.status});
+    await updatePaymentMethod(selectedMethod.id, { name: formData.name, code: formData.code, status: formData.status });
     setIsSubmitting(false);
     setIsEditModalOpen(false);
   };
@@ -103,7 +103,7 @@ export default function AdminPaymentMethodListPage() {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-right space-x-2">
-                      <button 
+                      <button
                         onClick={() => handleOpenEdit(method)}
                         className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                         title="Chỉnh sửa"
@@ -112,7 +112,7 @@ export default function AdminPaymentMethodListPage() {
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                         </svg>
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleOpenDelete(method)}
                         className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                         title="Xóa"
@@ -133,16 +133,16 @@ export default function AdminPaymentMethodListPage() {
       {/* Add Modal */}
       <Modal isOpen={isAddModalOpen} onClose={() => !isSubmitting && setIsAddModalOpen(false)} title="Thêm phương thức mới">
         <div className="space-y-4">
-          <Input 
-            label="Mã phương thức (VNPAY, MOMO...)" 
-            placeholder="Nhập mã..." 
+          <Input
+            label="Mã phương thức (VNPAY, MOMO...)"
+            placeholder="Nhập mã..."
             value={formData.code}
             onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
             disabled={isSubmitting}
           />
-          <Input 
-            label="Tên hiển thị" 
-            placeholder="Nhập tên hiển thị..." 
+          <Input
+            label="Tên hiển thị"
+            placeholder="Nhập tên hiển thị..."
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             disabled={isSubmitting}
@@ -157,21 +157,21 @@ export default function AdminPaymentMethodListPage() {
       {/* Edit Modal */}
       <Modal isOpen={isEditModalOpen} onClose={() => !isSubmitting && setIsEditModalOpen(false)} title="Chỉnh sửa phương thức">
         <div className="space-y-4">
-          <Input 
-            label="Mã phương thức" 
+          <Input
+            label="Mã phương thức"
             value={formData.code}
             onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
             disabled={isSubmitting}
           />
-          <Input 
-            label="Tên hiển thị" 
+          <Input
+            label="Tên hiển thị"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             disabled={isSubmitting}
           />
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">Trạng thái</label>
-            <select 
+            <select
               className="w-full px-4 py-2 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-600"
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: Number(e.target.value) })}
@@ -192,7 +192,7 @@ export default function AdminPaymentMethodListPage() {
       <Modal isOpen={isDeleteModalOpen} onClose={() => !isSubmitting && setIsDeleteModalOpen(false)} title="Xóa phương thức">
         <div className="space-y-4">
           <p className="text-slate-600">
-            Bạn có chắc chắn muốn xóa phương thức <span className="font-bold text-slate-800">{selectedMethod?.name}</span>? 
+            Bạn có chắc chắn muốn xóa phương thức <span className="font-bold text-slate-800">{selectedMethod?.name}</span>?
             Hành động này không thể hoàn tác.
           </p>
           <div className="flex justify-end gap-3 mt-6">

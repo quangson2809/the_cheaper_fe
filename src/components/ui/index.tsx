@@ -63,9 +63,10 @@ export function Button({
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  icon?: React.ReactNode;
 }
 
-export function Input({ label, error, id, className = '', ...props }: InputProps) {
+export function Input({ label, error, id, className = '', icon, ...props }: InputProps) {
   return (
     <div className="flex flex-col gap-1 w-full">
       {label && (
@@ -73,12 +74,20 @@ export function Input({ label, error, id, className = '', ...props }: InputProps
           {label}
         </label>
       )}
-      <input
-        id={id}
-        {...props}
-        className={`w-full px-4 py-2.5 rounded-xl border transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 ${error ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-white hover:border-indigo-300'
-          } ${className}`}
-      />
+      <div className="relative">
+        {icon && (
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none flex items-center justify-center">
+            {icon}
+          </div>
+        )}
+        <input
+          id={id}
+          {...props}
+          className={`w-full py-2.5 rounded-xl border transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-400 ${icon ? 'pl-11 pr-4' : 'px-4'
+            } ${error ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-white hover:border-indigo-300'
+            } ${className}`}
+        />
+      </div>
       {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
   );

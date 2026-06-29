@@ -36,10 +36,15 @@ export function useAdminProducts(filters: AdminProductFilterRequest) {
     setIsLoading(true);
     setHasError(false);
     try {
+      // filters
+      console.log('filters', filters);
+      // api
       const res = await productService.getAdminProducts(filters);
-      if (res.data && res.data.content && res.data.content.length > 0) {
-        setData(res.data);
-      }
+      // data 
+      console.log('res', res);
+
+      setData(res.data)
+
     } catch (err) {
       console.error('Lỗi khi tải danh sách sản phẩm (API):', err);
       setHasError(true);
@@ -112,6 +117,7 @@ export function useAdminProductDetail(id: string | undefined) {
   // Existing variants: edits (keyed by variant id) and deletions
   const [editedVariants, setEditedVariants] = useState<Map<number, AdminVariantUpdateRequest>>(new Map());
   const [deletedVariantIds, setDeletedVariantIds] = useState<number[]>([]);
+  const [deletedImageIds, setDeletedImageIds] = useState<number[]>([]);
 
   // Fetch product detail
   const fetchProduct = useCallback(async () => {
@@ -123,6 +129,7 @@ export function useAdminProductDetail(id: string | undefined) {
         setProduct(res.data);
         setEditedVariants(new Map());
         setDeletedVariantIds([]);
+        setDeletedImageIds([]);
       }
     } catch (err) {
       console.error(`Lỗi tải chi tiết sản phẩm #${id}:`, err);
@@ -215,6 +222,15 @@ export function useAdminProductDetail(id: string | undefined) {
     setDeletedVariantIds((prev) => [...prev, variantId]);
   }, []);
 
+  /** Optimistically remove an existing image from UI and mark it for deletion on save */
+  const deleteExistingImage = useCallback((imageId: number) => {
+    setProduct((prev) => ({
+      ...prev,
+      images: prev.images?.filter((img) => img.id !== imageId) ?? [],
+    }));
+    setDeletedImageIds((prev) => [...prev, imageId]);
+  }, []);
+
   // ── Save Handler ──────────────────────────────────
 
   const saveProduct = useCallback(async (onSuccess: () => void) => {
@@ -259,6 +275,7 @@ export function useAdminProductDetail(id: string | undefined) {
             variantCreates: buildCreateRequests(),
             variantUpdates: [...editedVariants.values()],
             variantDeletes: deletedVariantIds,
+            imageDeletes: deletedImageIds,
           },
           files
         );
@@ -289,6 +306,7 @@ export function useAdminProductDetail(id: string | undefined) {
     editedVariants,
     updateExistingVariant,
     deleteExistingVariant,
+    deleteExistingImage,
     // Media
     handleFileChange,
     removePreviewImage,

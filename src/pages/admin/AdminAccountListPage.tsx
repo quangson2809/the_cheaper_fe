@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import React, { useState } from 'react';
 import { Button, Input, Badge, Select, Modal, Spinner } from '@/components/ui';
 import { EmptyState } from '@/components/common';
 import { useAdminAccounts } from '@/hooks/admin/useAdminAccounts';
@@ -40,7 +40,7 @@ export default function AdminAccountListPage() {
     await updateStatus(id, newStatus);
   };
 
-  const handleSubmitCreate = async (e: FormEvent) => {
+  const handleSubmitCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     const success = await createAdmin(formData);
     if (success && !submitError) {
@@ -107,48 +107,48 @@ export default function AdminAccountListPage() {
             <table className="w-full text-left text-sm text-slate-600">
               <thead className="bg-slate-50 text-slate-700 text-xs uppercase font-semibold">
                 <tr>
-                  <th className="px-4 sm:px-6 py-4">Người dùng</th>
-                  <th className="px-4 sm:px-6 py-4 hidden sm:table-cell">Liên hệ</th>
-                  <th className="px-4 sm:px-6 py-4 text-center">Vai trò</th>
-                  <th className="px-4 sm:px-6 py-4 text-center hidden sm:table-cell">Trạng thái</th>
-                  <th className="px-4 sm:px-6 py-4 text-right">Thao tác</th>
+                  <th className="px-6 py-4">Người dùng</th>
+                  <th className="px-6 py-4">Liên hệ</th>
+                  <th className="px-6 py-4 text-center">Vai trò</th>
+                  <th className="px-6 py-4 text-center">Trạng thái</th>
+                  <th className="px-6 py-4 text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {(accounts || []).map((acc: AdminAccountResponse) => (
                   <tr key={acc.id} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-4 sm:px-6 py-3 sm:py-4">
+                    <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold shrink-0">
+                        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
                           {acc.name.charAt(0)}
                         </div>
-                        <div className="min-w-0">
-                          <p className="font-bold text-slate-800 truncate">{acc.name}</p>
+                        <div>
+                          <p className="font-bold text-slate-800">{acc.name}</p>
                           <p className="text-xs text-slate-400">#{acc.id}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 sm:px-6 py-3 sm:py-4 hidden sm:table-cell">
+                    <td className="px-6 py-4">
                       <div className="space-y-0.5">
-                        <p className="text-slate-700 font-medium text-sm truncate max-w-[160px]">{acc.email}</p>
+                        <p className="text-slate-700 font-medium">{acc.email}</p>
                         <p className="text-xs text-slate-500">{acc.phone || 'Chưa có SĐT'}</p>
                       </div>
                     </td>
-                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-center">
+                    <td className="px-6 py-4 text-center">
                       <Badge variant={acc.role === 'ADMIN' ? 'error' : 'primary'}>
                         {acc.role === 'ADMIN' ? 'Quản trị' : 'Khách hàng'}
                       </Badge>
                     </td>
-                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-center hidden sm:table-cell">
+                    <td className="px-6 py-4 text-center">
                       <Badge variant={Number(acc.status) === 1 ? 'success' : 'neutral'}>
                         {Number(acc.status) === 1 ? 'Hoạt động' : 'Đã khóa'}
                       </Badge>
                     </td>
-                    <td className="px-4 sm:px-6 py-3 sm:py-4 text-right">
+                    <td className="px-6 py-4 text-right">
                       <Button
                         onClick={() => handleUpdateStatus(acc.id, Number(acc.status))}
                         variant={Number(acc.status) === 1 ? 'danger' : 'success'}
-                        className="px-3 py-1.5 rounded-xl text-xs font-bold"
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all`}
                       >
                         {Number(acc.status) === 1 ? 'Khóa' : 'Mở khóa'}
                       </Button>
@@ -159,7 +159,7 @@ export default function AdminAccountListPage() {
             </table>
           </div>
         )}
-        
+
         {/* Pagination Footer */}
         {!loading && accounts && accounts.length > 0 && (
           <div className="p-4 border-t border-slate-100 flex items-center justify-between text-sm text-slate-500">

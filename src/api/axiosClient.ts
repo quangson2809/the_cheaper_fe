@@ -29,14 +29,17 @@ axiosClient.interceptors.response.use(
     // Log detailed error to console for developers
     console.error('[API Error]:', error.response?.data || error.message);
 
+    // Skip toast for logout endpoint
+    const isLogout = error.config?.url?.includes('/api/auth/logout');
+
     if (error.response?.status === 401) {
       // Unauthorized: clear auth and redirect
       localStorage.removeItem('accessToken');
       localStorage.removeItem('authUser');
       toast.error('Phiên làm việc hết hạn. Vui lòng đăng nhập lại.');
       window.location.href = '/login';
-    } else {
-      // Other errors: show user-friendly message
+    } else if (!isLogout) {
+      // Other errors: show user-friendly message (except for logout)
       const message = error.response?.data?.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.';
       toast.error(message);
     }

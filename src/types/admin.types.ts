@@ -8,7 +8,7 @@ export interface AdminAccountResponse {
   email: string;
   phone: string | null;
   role: string;
-  status: string;
+  status: number;
 }
 
 export interface AdminCreateAdminRequest {

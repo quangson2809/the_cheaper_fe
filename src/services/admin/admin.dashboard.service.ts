@@ -8,8 +8,8 @@ import type {
   OrderStatusRatioResponse,
 } from '@/types/admin.types';
 
-export async function getDashboard(): Promise<ApiResponse<AdminDashboardResponse>> {
-  const res = await axiosClient.get<ApiResponse<AdminDashboardResponse>>(EP.ADMIN_DASHBOARD);
+export async function getDashboardStats(): Promise<ApiResponse<AdminDashboardResponse>> {
+  const res = await axiosClient.get<ApiResponse<AdminDashboardResponse>>(EP.ADMIN_DASHBOARD_STATS);
   return res.data;
 }
 
@@ -20,14 +20,14 @@ export async function getMonthlyRevenue(year?: number): Promise<ApiResponse<Mont
   return res.data;
 }
 
-export async function getMonthlyOrders(year?: number): Promise<ApiResponse<MonthlyQuantityResponse[]>> {
-  const res = await axiosClient.get<ApiResponse<MonthlyQuantityResponse[]>>(EP.ADMIN_DASHBOARD_MONTHLY_ORDERS, {
+export async function getMonthlyQuantity(year?: number): Promise<ApiResponse<MonthlyQuantityResponse[]>> {
+  const res = await axiosClient.get<ApiResponse<MonthlyQuantityResponse[]>>(EP.ADMIN_DASHBOARD_MONTHLY_QUANTITY, {
     params: year ? { year } : undefined,
   });
   return res.data;
 }
 
-export async function getOrderStatusRatio(): Promise<ApiResponse<OrderStatusRatioResponse[]>> {
-  const res = await axiosClient.get<ApiResponse<OrderStatusRatioResponse[]>>(EP.ADMIN_DASHBOARD_ORDER_RATIO);
+export async function getOrderStatus(): Promise<ApiResponse<OrderStatusRatioResponse[]>> {
+  const res = await axiosClient.get<ApiResponse<OrderStatusRatioResponse[]>>(EP.ADMIN_DASHBOARD_ORDER_STATUS);
   return res.data;
 }

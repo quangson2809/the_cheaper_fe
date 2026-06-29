@@ -9,7 +9,9 @@ export default function AdminAttributeListPage() {
 
   // Modal states
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingAttr, setEditingAttr] = useState<AdminOptionAttributeResponse | null>(null);
+  const [attributeToDelete, setAttributeToDelete] = useState<AdminOptionAttributeResponse | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   // Form states
@@ -31,6 +33,19 @@ export default function AdminAttributeListPage() {
     setValues(attr.values.map(v => v.value));
     setFormError(null);
     setIsModalOpen(true);
+  };
+
+  const handleOpenDelete = (attr: AdminOptionAttributeResponse) => {
+    setAttributeToDelete(attr);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteSubmit = async () => {
+    if (!attributeToDelete) return;
+    setSubmitting(true);
+    await deleteAttribute(attributeToDelete.id);
+    setSubmitting(false);
+    setIsDeleteModalOpen(false);
   };
 
   const handleValueChange = (index: number, val: string) => {
@@ -77,11 +92,6 @@ export default function AdminAttributeListPage() {
     setSubmitting(false);
   };
 
-  const handleDelete = async (id: number, name: string) => {
-    if (!confirm(`Bạn có chắc chắn muốn xóa thuộc tính "${name}"?`)) return;
-    await deleteAttribute(id);
-  };
-
   return (
     <div className="space-y-6 animate-[fadeIn_0.3s_ease]">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -122,7 +132,7 @@ export default function AdminAttributeListPage() {
                     </svg>
                   </button>
                   <button 
-                    onClick={() => handleDelete(attr.id, attr.name)}
+                    onClick={() => handleOpenDelete(attr)}
                     className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all"
                     title="Xóa"
                   >
@@ -224,6 +234,20 @@ export default function AdminAttributeListPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* Delete Modal */}
+      <Modal isOpen={isDeleteModalOpen} onClose={() => !submitting && setIsDeleteModalOpen(false)} title="Xác nhận xóa">
+        <div className="space-y-4 pt-2">
+          <p className="text-slate-600 leading-relaxed">
+            Bạn có chắc chắn muốn xóa thuộc tính <span className="font-bold text-slate-900">{attributeToDelete?.name}</span>? 
+            Hành động này sẽ gỡ bỏ thuộc tính khỏi hệ thống và không thể hoàn tác.
+          </p>
+          <div className="flex justify-end gap-3 mt-8">
+            <Button variant="ghost" onClick={() => setIsDeleteModalOpen(false)} disabled={submitting}>Hủy</Button>
+            <Button variant="danger" onClick={handleDeleteSubmit} isLoading={submitting}>Xác nhận xóa</Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

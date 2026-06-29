@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '@/store/AuthContext';
 import { useCartContext } from '@/store/CartContext';
+import { toast } from '@/store/ToastContext';
 import * as authService from '@/services/auth.service';
 import * as cartService from '@/services/cart.service';
 import type { LoginRequest, RegisterRequest, ChangePasswordRequest } from '@/types/auth.types';
@@ -68,10 +69,13 @@ export function useAuth() {
   async function logout() {
     try {
       await authService.logout();
+    } catch (err: unknown) {
+      console.error('Remote logout failed', err);
     } finally {
       clearAuth();
       resetCart();
-      navigate('/login');
+      toast.success('Đăng xuất thành công');
+      navigate('/');
     }
   }
 
