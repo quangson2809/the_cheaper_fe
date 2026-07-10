@@ -3,7 +3,7 @@ import { useProducts } from '@/hooks/product/useProducts';
 import { useProductFiltersData } from '@/hooks/product/useProductFiltersData';
 import { ProductGrid } from '@/components/product';
 import { Spinner, Button, Input, Select } from '@/components/ui';
-import { Pagination, EmptyState } from '@/components/common';
+import { Pagination, EmptyState, PageHeader } from '@/components/common';
 import type { UserProductFilterRequest } from '@/types/product.types';
 
 export default function ProductListPage() {
@@ -23,7 +23,9 @@ export default function ProductListPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-extrabold text-slate-800 mb-6">Tất cả sản phẩm</h1>
+      <div className="mb-6">
+        <PageHeader title="Tất cả sản phẩm" showBackBtn={true} />
+      </div>
 
       {/* Filter bar */}
       <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-4 mb-8 flex flex-wrap gap-4 items-end">

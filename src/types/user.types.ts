@@ -10,10 +10,8 @@ export interface UserAddressResponse {
 }
 
 export interface UserAddressCreateRequest {
-  fullName: string;
-  phone: string;
+  homeNumber: string;
   street: string;
-  ward: string;
   district: string;
   city: string;
   isDefault: boolean;

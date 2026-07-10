@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { useOrders } from '@/hooks/order/useOrders';
 import { Spinner } from '@/components/ui';
-import { Pagination, EmptyState } from '@/components/common';
+import { Pagination, EmptyState, PageHeader } from '@/components/common';
 import { OrderCard } from '@/components/order';
 
 export default function OrderListPage() {
@@ -11,10 +11,7 @@ export default function OrderListPage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Lịch sử đơn hàng</h1>
-        <p className="text-sm text-slate-500 mt-1">Theo dõi và quản lý các đơn hàng của bạn</p>
-      </div>
+      <PageHeader title="Lịch sử đơn hàng" subtitle="Theo dõi và quản lý các đơn hàng của bạn" showBackBtn={true} />
 
       {isLoading ? (
         <div className="flex justify-center py-24">

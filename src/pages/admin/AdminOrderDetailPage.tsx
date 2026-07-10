@@ -5,6 +5,7 @@ import type { OrderStatus } from '@/types/order.types';
 import { Spinner, Button, Badge } from '@/components/ui';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatDate';
+import { getImageUrl } from '@/utils/getImageUrl';
 
 const STATUS_CONFIG: Record<string, { label: string; variant: 'warning' | 'primary' | 'info' | 'success' | 'error' | 'neutral' }> = {
   PENDING: { label: 'Chờ xác nhận', variant: 'warning' },
@@ -199,7 +200,7 @@ export default function AdminOrderDetailPage() {
                 <div key={item.productId} className="flex items-center gap-6 p-8 hover:bg-slate-50/50 transition-colors">
                   <div className="w-20 h-20 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0 overflow-hidden shadow-inner">
                     {item.thumbnail ? (
-                      <img src={item.thumbnail} alt={item.productName} className="w-full h-full object-cover" />
+                      <img src={getImageUrl(item.thumbnail)} alt={item.productName} className="w-full h-full object-cover" />
                     ) : (
                       <svg className="w-10 h-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -284,7 +285,7 @@ export default function AdminOrderDetailPage() {
 
             <h2 className="text-lg font-black mb-6 flex justify-between items-center">
               Thanh toán
-              <div className={`w-3 h-3 rounded-full ${order.paymentStatus === 'PAID' ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]' : 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]'}`} />
+              <div className={`w-3 h-3 rounded-full ${order.paymentStatus === 1 ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]' : 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]'}`} />
             </h2>
 
             <div className="space-y-4">
@@ -294,8 +295,8 @@ export default function AdminOrderDetailPage() {
               </div>
               <div className="flex justify-between items-center">
                 <p className="text-slate-400 text-sm">Trạng thái</p>
-                <p className={`font-bold ${order.paymentStatus === 'PAID' ? 'text-emerald-400' : 'text-amber-400'}`}>
-                  {order.paymentStatus === 'PAID' ? 'Đã thanh toán' : 'Chưa thanh toán'}
+                <p className={`font-bold ${order.paymentStatus === 1 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  {order.paymentStatus === 1 ? 'Đã thanh toán' : 'Chưa thanh toán'}
                 </p>
               </div>
 

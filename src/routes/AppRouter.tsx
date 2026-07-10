@@ -22,7 +22,6 @@ const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPasswordPage'))
 
 // ── User pages ────────────────────────────────────────
 const ProfilePage = lazy(() => import('@/pages/user/ProfilePage'));
-const AddressPage = lazy(() => import('@/pages/user/AddressPage'));
 const CartPage = lazy(() => import('@/pages/user/CartPage'));
 const CheckoutPage = lazy(() => import('@/pages/user/CheckoutPage'));
 const OrderListPage = lazy(() => import('@/pages/user/OrderListPage'));
@@ -69,7 +68,6 @@ export function AppRouter() {
             {/* ── Protected user routes ── */}
             <Route element={<ProtectedRoute />}>
               <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/addresses" element={<AddressPage />} />
               <Route path="/checkout" element={<CheckoutPage />} />
               <Route path="/orders" element={<OrderListPage />} />
               <Route path="/orders/:id" element={<OrderDetailPage />} />

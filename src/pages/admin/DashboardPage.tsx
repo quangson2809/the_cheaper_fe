@@ -10,6 +10,7 @@ import { Spinner } from '@/components/ui';
 import { formatCurrency } from '@/utils/formatCurrency';
 
 export default function DashboardPage() {
+  const [year, setYear] = useState<number>(2026);
   const [data, setData] = useState<AdminDashboardResponse | null>(null);
   const [revenue, setRevenue] = useState<MonthlyRevenueResponse[]>([]);
   const [quantity, setQuantity] = useState<MonthlyQuantityResponse[]>([]);
@@ -17,11 +18,12 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    setIsLoading(true);
     // Đảm bảo gọi đủ 4 API, nếu API nào lỗi thì trả về Promise reject và xử lý riêng lẻ
     Promise.allSettled([
-      dashboardService.getDashboardStats().catch(err => { console.error('Stats Error'); throw err; }),
-      dashboardService.getMonthlyRevenue().catch(err => { console.error('Revenue Error'); throw err; }),
-      dashboardService.getMonthlyQuantity().catch(err => { console.error('Quantity Error'); throw err; }),
+      dashboardService.getDashboardStats(year).catch(err => { console.error('Stats Error'); throw err; }),
+      dashboardService.getMonthlyRevenue(year).catch(err => { console.error('Revenue Error'); throw err; }),
+      dashboardService.getMonthlyQuantity(year).catch(err => { console.error('Quantity Error'); throw err; }),
       dashboardService.getOrderStatus().catch(err => { console.error('Status Error'); throw err; })
     ]).then(([dashRes, revRes, qtyRes, statusRes]) => {
 
@@ -42,9 +44,9 @@ export default function DashboardPage() {
         if (payload) setOrderStatus(payload as any);
       }
     }).finally(() => setIsLoading(false));
-  }, []);
+  }, [year]);
 
-  if (isLoading) return <div className="flex justify-center py-32"><Spinner size="lg" /></div>;
+  if (isLoading && !data) return <div className="flex justify-center py-32"><Spinner size="lg" /></div>;
 
   const maxRevenue = revenue.length > 0 ? Math.max(...revenue.map(r => r.revenue), 1) : 1;
   const maxQuantity = quantity.length > 0 ? Math.max(...quantity.map(q => q.quantity), 1) : 1;
@@ -67,6 +69,15 @@ export default function DashboardPage() {
           <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Tổng quan hệ thống</h1>
           <p className="text-slate-500 mt-1">Theo dõi hoạt động kinh doanh và hiệu suất bán hàng.</p>
         </div>
+        <select
+          value={year}
+          onChange={(e) => setYear(Number(e.target.value))}
+          className="bg-white border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5"
+        >
+          {[2024, 2025, 2026, 2027].map((y) => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </select>
       </div>
 
       {/* Metric Cards */}

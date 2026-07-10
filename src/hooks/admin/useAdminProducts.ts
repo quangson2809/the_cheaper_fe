@@ -267,6 +267,7 @@ export function useAdminProductDetail(id: string | undefined) {
           {
             name: product.name || '',
             description: product.description,
+            status: product.status || 0,
             salePrice: product.salePrice || 0,
             comparePrice: product.comparePrice || 0,
             brandId: product.brand?.id ?? null,

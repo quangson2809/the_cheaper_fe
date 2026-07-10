@@ -8,8 +8,10 @@ import type {
   OrderStatusRatioResponse,
 } from '@/types/admin.types';
 
-export async function getDashboardStats(): Promise<ApiResponse<AdminDashboardResponse>> {
-  const res = await axiosClient.get<ApiResponse<AdminDashboardResponse>>(EP.ADMIN_DASHBOARD_STATS);
+export async function getDashboardStats(year: number): Promise<ApiResponse<AdminDashboardResponse>> {
+  const res = await axiosClient.get<ApiResponse<AdminDashboardResponse>>(EP.ADMIN_DASHBOARD_STATS, {
+    params: year ? { year } : undefined,
+  });
   return res.data;
 }
 

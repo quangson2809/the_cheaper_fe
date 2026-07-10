@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { AdminProductImageResponse } from '@/types/admin.types';
+import { getImageUrl } from '@/utils/getImageUrl';
 import { Spinner } from '@/components/ui';
 import { useAdminProductDetail } from '@/hooks/admin/useAdminProducts';
 import { useAdminCategories, useAdminBrands, useAdminMaterials } from '@/hooks/admin/useAdminCatalog';
@@ -131,8 +132,13 @@ export default function AdminProductDetailPage() {
                 product.images?.map((img: AdminProductImageResponse) => (
                   <div
                     key={img.id}
-                    className="aspect-square rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center relative group overflow-hidden"
+                    className="aspect-square rounded-xl bg-slate-100 border border-slate-200 relative group overflow-hidden"
                   >
+                    <img
+                      src={getImageUrl(img.name!)}
+                      alt={img.alt || product.name}
+                      className="w-full h-full object-cover"
+                    />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                       <button
                         type="button"
@@ -145,7 +151,6 @@ export default function AdminProductDetailPage() {
                         </svg>
                       </button>
                     </div>
-                    <span className="text-slate-400 font-medium text-xs text-center px-2">{img.alt || img.name}</span>
                   </div>
                 ))}
 

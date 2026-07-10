@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useCart } from '@/hooks/user/useCart';
 import { Link } from 'react-router-dom';
 import { Button, Spinner } from '@/components/ui';
-import { EmptyState } from '@/components/common';
+import { EmptyState, PageHeader } from '@/components/common';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { getImageUrl } from '@/utils/getImageUrl';
 
@@ -27,7 +27,7 @@ export default function CartPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <h1 className="text-2xl font-extrabold text-slate-800">Giỏ hàng ({items.length})</h1>
+      <PageHeader title={`Giỏ hàng (${items.length})`} showBackBtn={true} />
 
       <div className="bg-white rounded-3xl shadow-sm border border-slate-100 divide-y divide-slate-50">
         {items.map((item) => (

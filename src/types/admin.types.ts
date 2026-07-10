@@ -151,6 +151,7 @@ export interface AdminProductCreateRequest {
 export interface AdminProductUpdateRequest {
   name: string;
   description?: string | null;
+  status: number;
   materialId?: number | null;
   salePrice: number;
   comparePrice: number;
@@ -172,8 +173,6 @@ export interface AdminProductFilterRequest {
   sortBy?: string;
 }
 
-// ── Orders ────────────────────────────────────────────
-
 export interface AdminOrderItemResponse {
   productId: number;
   quantity: number;
@@ -192,7 +191,7 @@ export interface AdminOrderOverviewResponse {
   location: string | null;
   phone: string | null;
   paymentMethodCode: string | null;
-  paymentStatus: string | null;
+  paymentStatus: number;
 }
 
 export interface AdminOrderDetailResponse {
@@ -201,7 +200,7 @@ export interface AdminOrderDetailResponse {
   status: OrderStatus;
   createdAt: string;
   paymentMethodCode: string | null;
-  paymentStatus: string | null;
+  paymentStatus: number;
   receiver: string | null;
   phone: string | null;
   location: string | null;

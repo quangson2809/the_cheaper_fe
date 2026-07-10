@@ -4,7 +4,7 @@ import { useProductDetail } from '@/hooks/product/useProductDetail';
 import { useCart } from '@/hooks/user/useCart';
 import { useAuthContext } from '@/store/AuthContext';
 import { Button, Spinner } from '@/components/ui';
-import { EmptyState } from '@/components/common';
+import { EmptyState, PageHeader } from '@/components/common';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { getImageUrl } from '@/utils/getImageUrl';
 
@@ -116,6 +116,9 @@ export default function ProductDetailPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="mb-6">
+        <PageHeader title="Chi tiết sản phẩm" showBackBtn={true} />
+      </div>
       <div className="bg-white rounded-[2rem] shadow-xl shadow-slate-200/50 overflow-hidden border border-slate-100">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
 

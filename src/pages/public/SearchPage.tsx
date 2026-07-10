@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useSearchProducts } from '@/hooks/product/useProducts';
 import { ProductGrid } from '@/components/product';
 import { Spinner, Input, Button } from '@/components/ui';
-import { EmptyState, Pagination } from '@/components/common';
+import { EmptyState, Pagination, PageHeader } from '@/components/common';
 
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -21,7 +21,9 @@ export default function SearchPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-extrabold text-slate-800 mb-6">Tìm kiếm sản phẩm</h1>
+      <div className="mb-6">
+        <PageHeader title="Tìm kiếm sản phẩm" showBackBtn={true} />
+      </div>
 
       <form onSubmit={handleSearch} className="flex gap-3 mb-8">
         <Input

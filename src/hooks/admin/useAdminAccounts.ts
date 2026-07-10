@@ -51,8 +51,13 @@ export function useAdminAccounts(initialFilters: AdminUserFilterRequest = DEFAUL
     setIsSubmitting(true);
     setSubmitError(null);
     try {
+      //data
+      console.log(data);
+      // api
       await accountService.createAdmin(data);
+      // fetch
       await fetchAccounts();
+
       setIsSubmitting(false);
       return true;
     } catch (error: any) {

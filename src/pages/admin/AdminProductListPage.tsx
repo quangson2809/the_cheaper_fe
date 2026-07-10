@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { getImageUrl } from '@/utils/getImageUrl';
 import { Spinner, Button } from '@/components/ui';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { useAdminProducts } from '@/hooks/admin/useAdminProducts';
@@ -52,62 +53,62 @@ export default function AdminProductListPage() {
         </Link>
       </div>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-        {/* Filter bar */}
-        <div className="p-4 border-b border-slate-100 bg-slate-50/50 space-y-3">
-          {/* Search */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Tìm kiếm sản phẩm..."
-              className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
-            />
-            <svg className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
-          {/* Filters — 2 cols on mobile, 4 cols on sm+ */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            <select
-              value={filterCategory ?? ''}
-              onChange={(e) => { setFilterCategory(e.target.value ? Number(e.target.value) : undefined); setPage(1); }}
-              className={selectClass}
-            >
-              <option value="">Tất cả danh mục</option>
-              {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-
-            <select
-              value={filterBrand ?? ''}
-              onChange={(e) => { setFilterBrand(e.target.value ? Number(e.target.value) : undefined); setPage(1); }}
-              className={selectClass}
-            >
-              <option value="">Tất cả thương hiệu</option>
-              {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
-            </select>
-
-            <select
-              value={filterMaterial ?? ''}
-              onChange={(e) => { setFilterMaterial(e.target.value ? Number(e.target.value) : undefined); setPage(1); }}
-              className={selectClass}
-            >
-              <option value="">Tất cả chất liệu</option>
-              {materials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-            </select>
-
-            <select
-              value={filterStatus ?? ''}
-              onChange={(e) => { setFilterStatus(e.target.value ? Number(e.target.value) : undefined); setPage(1); }}
-              className={selectClass}
-            >
-              <option value="">Tất cả trạng thái</option>
-              <option value="1">Đang bán</option>
-              <option value="0">Ngừng bán</option>
-            </select>
-          </div>
+      {/* Filters */}
+      <div className="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-100 space-y-3">
+        {/* Search */}
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Tìm kiếm sản phẩm..."
+            className="w-full pl-10 pr-4 py-2 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-colors"
+          />
+          <svg className="w-5 h-5 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
         </div>
+        {/* Filters — 2 cols on mobile, 4 cols on sm+ */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <select
+            value={filterCategory ?? ''}
+            onChange={(e) => { setFilterCategory(e.target.value ? Number(e.target.value) : undefined); setPage(1); }}
+            className={selectClass}
+          >
+            <option value="">Tất cả danh mục</option>
+            {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+          </select>
 
-        {/* Table */}
+          <select
+            value={filterBrand ?? ''}
+            onChange={(e) => { setFilterBrand(e.target.value ? Number(e.target.value) : undefined); setPage(1); }}
+            className={selectClass}
+          >
+            <option value="">Tất cả thương hiệu</option>
+            {brands.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
+
+          <select
+            value={filterMaterial ?? ''}
+            onChange={(e) => { setFilterMaterial(e.target.value ? Number(e.target.value) : undefined); setPage(1); }}
+            className={selectClass}
+          >
+            <option value="">Tất cả chất liệu</option>
+            {materials.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+          </select>
+
+          <select
+            value={filterStatus ?? ''}
+            onChange={(e) => { setFilterStatus(e.target.value ? Number(e.target.value) : undefined); setPage(1); }}
+            className={selectClass}
+          >
+            <option value="">Tất cả trạng thái</option>
+            <option value="1">Đang bán</option>
+            <option value="0">Ngừng bán</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
         {isLoading ? (
           <div className="flex justify-center py-20"><Spinner size="lg" /></div>
         ) : (
@@ -134,7 +135,7 @@ export default function AdminProductListPage() {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-slate-100 overflow-hidden shrink-0 border border-slate-100">
                           {p.thumbnailUrl ? (
-                            <img src={p.thumbnailUrl} alt={p.name} className="w-full h-full object-cover" />
+                            <img src={getImageUrl(p.thumbnailUrl)} alt={p.name} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-slate-300">
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

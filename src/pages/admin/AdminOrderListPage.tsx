@@ -95,7 +95,6 @@ export default function AdminOrderListPage() {
             value={filterStatus}
             onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
             options={[
-              { value: '', label: 'Tất cả trạng thái' },
               ...ALL_STATUSES.map((s) => ({ value: s, label: STATUS_CONFIG[s].label })),
             ]}
           />
@@ -157,9 +156,9 @@ export default function AdminOrderListPage() {
                     </td>
                     <td className="px-4 sm:px-6 py-4 sm:py-5 text-right">
                       <p className="font-black text-slate-800 whitespace-nowrap">{formatCurrency(order.finalTotal)}</p>
-                      <p className={`text-[10px] font-bold uppercase tracking-tight whitespace-nowrap ${order.paymentStatus === 'PAID' ? 'text-emerald-500' : 'text-amber-500'
+                      <p className={`text-[10px] font-bold uppercase tracking-tight whitespace-nowrap ${order.paymentStatus === 1 ? 'text-emerald-500' : 'text-amber-500'
                         }`}>
-                        {order.paymentStatus === 'PAID' ? 'Đã thanh toán' : 'Chưa TT'}
+                        {order.paymentStatus === 1 ? 'Đã thanh toán' : 'Chưa thanh toán'}
                       </p>
                     </td>
                     <td className="px-4 sm:px-6 py-4 sm:py-5 text-center" onClick={(e) => e.stopPropagation()}>

@@ -3,6 +3,7 @@ import { useProfile } from '@/hooks/user/useProfile';
 import { Button, Input, Spinner } from '@/components/ui';
 import { formatDate } from '@/utils/formatDate';
 import { useToast } from '@/store/ToastContext';
+import { PageHeader } from '@/components/common';
 
 export default function ProfilePage() {
   const { profile, isLoading, updateProfile } = useProfile();
@@ -34,7 +35,7 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      <h1 className="text-2xl font-extrabold text-slate-800">Hồ sơ cá nhân</h1>
+      <PageHeader title="Hồ sơ cá nhân" showBackBtn={true} />
 
       <div className="bg-white rounded-3xl shadow-sm border border-slate-100 p-8">
         {/* Avatar area */}

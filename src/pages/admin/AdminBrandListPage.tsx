@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAdminBrands } from '@/hooks/admin/useAdminCatalog';
 import { Button, Input, Modal, Badge, Spinner } from '@/components/ui';
+import { PageHeader } from '@/components/common';
 import type { AdminBrandResponse } from '@/types/admin.types';
 
 export default function AdminBrandListPage() {
@@ -59,15 +60,16 @@ export default function AdminBrandListPage() {
 
   return (
     <div className="space-y-6 animate-[fadeIn_0.3s_ease]">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">Thương hiệu</h1>
-          <p className="text-slate-500 mt-1">Danh sách các thương hiệu sản phẩm trong hệ thống</p>
-        </div>
-        <Button variant="primary" onClick={handleOpenAdd} className="shadow-lg shadow-indigo-200">
-          + Thêm thương hiệu
-        </Button>
-      </div>
+      <PageHeader 
+        title="Thương hiệu"
+        subtitle="Danh sách các thương hiệu sản phẩm trong hệ thống"
+        showBackBtn={true}
+        actions={
+          <Button variant="primary" onClick={handleOpenAdd} className="shadow-lg shadow-indigo-200/50 hover:shadow-indigo-300/50 transition-all hover:-translate-y-0.5 active:scale-95">
+            + Thêm thương hiệu
+          </Button>
+        }
+      />
 
       <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 min-h-[400px]">
         {isLoading ? (
