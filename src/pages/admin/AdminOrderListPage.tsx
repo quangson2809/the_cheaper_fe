@@ -2,11 +2,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminOrders } from '@/hooks/admin/useAdminOrders';
 import type { OrderStatus } from '@/types/order.types';
-import { Spinner, Input, Select, Button } from '@/components/ui';
+import { Spinner, Input, Select, Button, Badge } from '@/components/ui';
 import { formatCurrency } from '@/utils/formatCurrency';
 import { formatDate } from '@/utils/formatDate';
 
-const STATUS_CONFIG: Record<string, { label: string; variant: 'warning' | 'primary' | 'info' | 'success' | 'error' | 'neutral' }> = {
+const STATUS_CONFIG: Record<string, { label: string; variant: 'warning' | 'info' | 'primary' | 'success' | 'error' | 'neutral' }> = {
   PENDING: { label: 'Chờ xác nhận', variant: 'warning' },
   PROCESSING: { label: 'Đang xử lý', variant: 'info' },
   SHIPPING: { label: 'Đang giao', variant: 'primary' },
@@ -17,18 +17,6 @@ const STATUS_CONFIG: Record<string, { label: string; variant: 'warning' | 'prima
 
 const ALL_STATUSES: OrderStatus[] = ['PENDING', 'PROCESSING', 'SHIPPING', 'DELIVERED', 'CANCELED', 'REFUNDED'];
 
-const statusSelectClass = (status: string) => {
-  const colorMap: Record<string, string> = {
-    PENDING: 'bg-amber-50 text-amber-600 border-amber-100',
-    PROCESSING: 'bg-blue-50 text-blue-600 border-blue-100',
-    SHIPPING: 'bg-indigo-50 text-indigo-600 border-indigo-100',
-    DELIVERED: 'bg-emerald-50 text-emerald-600 border-emerald-100',
-    CANCELED: 'bg-red-50 text-red-600 border-red-100',
-  };
-  return `w-full appearance-none font-bold text-[11px] uppercase tracking-wider rounded-xl px-3 py-2 border transition-all cursor-pointer focus:outline-none focus:ring-4 focus:ring-indigo-500/10 ${colorMap[status] ?? 'bg-slate-50 text-slate-500 border-slate-100'
-    }`;
-};
-
 export default function AdminOrderListPage() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
@@ -36,182 +24,110 @@ export default function AdminOrderListPage() {
   const [search, setSearch] = useState('');
   const [updatingId, setUpdatingId] = useState<number | null>(null);
 
-  const { orders, isLoading, totalElements, totalPages, updateOrderStatus } = useAdminOrders({
-    page,
-    limit: 10,
-    status: filterStatus || undefined,
+  const { orders, isLoading, totalElements, totalPages, updateOrderStatus } = useAdminOrders({ page, limit: 10, status: filterStatus || undefined });
+
+  const filteredOrders = orders.filter((order) => {
+    if (!search.trim()) return true;
+    const term = search.trim().toLowerCase();
+    return String(order.id).includes(term) || (order.phone ?? '').includes(term) || (order.location ?? '').toLowerCase().includes(term);
   });
 
-  const handleStatusChange = async (e: React.ChangeEvent<HTMLSelectElement>, id: number) => {
-    e.stopPropagation();
-    const newStatus = e.target.value as OrderStatus;
+  const handleStatusChange = async (id: number, value: string) => {
     setUpdatingId(id);
-    await updateOrderStatus(id, newStatus);
+    await updateOrderStatus(id, value as OrderStatus);
     setUpdatingId(null);
   };
 
-  const filteredOrders = orders.filter((o) => {
-    if (!search) return true;
-    const searchLower = search.toLowerCase();
-    return (
-      String(o.id).includes(search) ||
-      (o.phone ?? '').includes(search) ||
-      (o.location ?? '').toLowerCase().includes(searchLower)
-    );
-  });
-
   return (
-    <div className="space-y-6 animate-[fadeIn_0.3s_ease] pb-10">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6">
+      <section className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-800 tracking-tight">Danh sách Hóa đơn</h1>
-          <p className="text-slate-500 mt-1 text-sm">Theo dõi và quản lý toàn bộ luồng đơn hàng trong hệ thống</p>
+          <div className="admin-kicker">Commerce</div>
+          <h1 className="admin-page-title mt-2">Đơn hàng</h1>
+          <p className="admin-page-subtitle">Theo dõi trạng thái, thanh toán và tiến độ xử lý đơn.</p>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 rounded-2xl border border-indigo-100 shrink-0">
-          <span className="text-indigo-700 font-bold text-lg">{totalElements}</span>
-          <span className="text-indigo-600/70 text-xs font-bold uppercase tracking-wider">Tổng đơn</span>
+        <div className="admin-surface flex items-center gap-3 px-4 py-2.5">
+          <span className="text-xl font-semibold tracking-tight text-slate-900">{totalElements}</span>
+          <span className="text-xs font-medium text-slate-500">đơn hàng</span>
         </div>
-      </div>
+      </section>
 
-      {/* Filters */}
-      <div className="bg-white p-4 sm:p-6 rounded-3xl shadow-sm border border-slate-100 flex flex-col md:flex-row gap-4 items-stretch md:items-end">
-        <div className="flex-1">
+      <section className="admin-surface overflow-hidden">
+        <div className="grid grid-cols-1 gap-3 p-5 md:grid-cols-[1fr_240px]">
           <Input
-            placeholder="Tìm mã đơn, SĐT hoặc địa chỉ..."
+            aria-label="Tìm kiếm đơn hàng"
+            placeholder="Tìm theo mã đơn, số điện thoại hoặc địa chỉ..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full"
-            icon={
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            }
+            onChange={(event) => setSearch(event.target.value)}
+            icon={<svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" /></svg>}
           />
-        </div>
-        <div className="w-full md:w-56">
           <Select
-            label="Lọc theo trạng thái"
+            label="Trạng thái"
             value={filterStatus}
-            onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
-            options={[
-              ...ALL_STATUSES.map((s) => ({ value: s, label: STATUS_CONFIG[s].label })),
-            ]}
+            onChange={(event) => { setFilterStatus(event.target.value); setPage(1); }}
+            options={ALL_STATUSES.map((status) => ({ value: status, label: STATUS_CONFIG[status].label }))}
           />
         </div>
-      </div>
+      </section>
 
-      {/* Table */}
-      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden min-h-[400px]">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-64 space-y-4">
-            <Spinner size="lg" />
-            <p className="text-slate-400 font-medium animate-pulse">Đang tải danh sách...</p>
+      <section className="admin-surface overflow-hidden">
+        <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4">
+          <div>
+            <h2 className="text-sm font-semibold text-slate-900">Danh sách đơn hàng</h2>
+            <p className="mt-0.5 text-xs text-slate-500">{filteredOrders.length} kết quả trên trang hiện tại.</p>
           </div>
+          <span className="text-xs font-medium text-slate-400">Trang {page} / {Math.max(totalPages, 1)}</span>
+        </div>
+
+        {isLoading ? (
+          <div className="flex min-h-[420px] items-center justify-center"><Spinner size="lg" /></div>
         ) : filteredOrders.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-80 text-slate-400">
-            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-              <svg className="w-10 h-10 text-slate-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-            <p className="text-lg font-bold">Không tìm thấy đơn hàng nào</p>
-            <p className="text-sm">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+          <div className="flex min-h-[360px] flex-col items-center justify-center px-6 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400"><span className="text-xs font-bold">ORD</span></div>
+            <p className="mt-4 text-sm font-semibold text-slate-900">Không tìm thấy đơn hàng</p>
+            <p className="mt-1 text-sm text-slate-500">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-600">
-              <thead className="bg-slate-50/50 text-slate-500 text-[11px] uppercase font-black tracking-widest border-b border-slate-100">
-                <tr>
-                  <th className="px-4 sm:px-8 py-4 sm:py-5">Mã đơn</th>
-                  <th className="px-4 sm:px-6 py-4 sm:py-5">Khách hàng</th>
-                  <th className="px-4 sm:px-6 py-4 sm:py-5 text-center hidden sm:table-cell">SL</th>
-                  <th className="px-4 sm:px-6 py-4 sm:py-5 text-right">Tổng tiền</th>
-                  <th className="px-4 sm:px-6 py-4 sm:py-5 text-center">Trạng thái</th>
-                  <th className="px-4 sm:px-8 py-4 sm:py-5 text-right hidden md:table-cell">Ngày tạo</th>
+            <table className="w-full min-w-[960px] text-left">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/70">
+                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Đơn hàng</th>
+                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Khách hàng</th>
+                  <th className="px-5 py-3 text-center text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Sản phẩm</th>
+                  <th className="px-5 py-3 text-right text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Tổng tiền</th>
+                  <th className="px-5 py-3 text-center text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Trạng thái</th>
+                  <th className="px-5 py-3 text-right text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Ngày tạo</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
-                {filteredOrders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-slate-50/50 transition-colors cursor-pointer group"
-                    onClick={() => navigate(`/admin/orders/${order.id}`)}
-                  >
-                    <td className="px-4 sm:px-8 py-4 sm:py-5">
-                      <span className="font-black text-indigo-600 group-hover:text-indigo-700 transition-colors">
-                        #{order.id}
-                      </span>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 sm:py-5">
-                      <p className="font-bold text-slate-800">{order.phone || '—'}</p>
-                      <p className="text-xs text-slate-400 truncate max-w-[140px] sm:max-w-[200px]">
-                        {order.location || '—'}
-                      </p>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 sm:py-5 text-center hidden sm:table-cell">
-                      <span className="inline-flex items-center justify-center min-w-[28px] h-7 px-2 rounded-lg bg-slate-100 text-slate-600 font-black text-[11px]">
-                        {order.countItem}
-                      </span>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 sm:py-5 text-right">
-                      <p className="font-black text-slate-800 whitespace-nowrap">{formatCurrency(order.finalTotal)}</p>
-                      <p className={`text-[10px] font-bold uppercase tracking-tight whitespace-nowrap ${order.paymentStatus === 1 ? 'text-emerald-500' : 'text-amber-500'
-                        }`}>
-                        {order.paymentStatus === 1 ? 'Đã thanh toán' : 'Chưa thanh toán'}
-                      </p>
-                    </td>
-                    <td className="px-4 sm:px-6 py-4 sm:py-5 text-center" onClick={(e) => e.stopPropagation()}>
-                      <div className="relative inline-block min-w-[120px] sm:min-w-[140px]">
-                        <select
-                          value={order.status}
-                          disabled={updatingId === order.id}
-                          onChange={(e) => handleStatusChange(e, order.id)}
-                          className={statusSelectClass(order.status)}
-                        >
-                          {ALL_STATUSES.map((s) => (
-                            <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>
-                          ))}
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                          {updatingId === order.id ? (
-                            <Spinner size="sm" />
-                          ) : (
-                            <svg className="w-3 h-3 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M19 9l-7 7-7-7" />
-                            </svg>
-                          )}
+              <tbody className="divide-y divide-slate-100">
+                {filteredOrders.map((order) => {
+                  const config = STATUS_CONFIG[order.status] ?? { label: order.status, variant: 'neutral' as const };
+                  return (
+                    <tr key={order.id} onClick={() => navigate(`/admin/orders/${order.id}`)} className="group cursor-pointer bg-white transition-colors hover:bg-slate-50/60">
+                      <td className="px-5 py-4"><span className="text-sm font-semibold text-indigo-600">#{order.id}</span><p className="mt-0.5 text-[11px] text-slate-400">Chi tiết đơn hàng</p></td>
+                      <td className="px-5 py-4"><p className="text-xs font-semibold text-slate-800">{order.phone || '—'}</p><p className="mt-0.5 max-w-[220px] truncate text-[11px] text-slate-400">{order.location || '—'}</p></td>
+                      <td className="px-5 py-4 text-center"><span className="inline-flex min-w-8 items-center justify-center rounded-md bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">{order.countItem}</span></td>
+                      <td className="px-5 py-4 text-right"><p className="text-xs font-semibold text-slate-900">{formatCurrency(order.finalTotal)}</p><p className={`mt-0.5 text-[10px] font-semibold ${order.paymentStatus === 1 ? 'text-emerald-600' : 'text-amber-600'}`}>{order.paymentStatus === 1 ? 'Đã thanh toán' : 'Chưa thanh toán'}</p></td>
+                      <td className="px-5 py-4 text-center" onClick={(event) => event.stopPropagation()}>
+                        <div className="flex flex-col items-center gap-1.5">
+                          <Badge variant={config.variant}>{config.label}</Badge>
+                          <select value={order.status} disabled={updatingId === order.id} onChange={(event) => void handleStatusChange(order.id, event.target.value)} className="h-8 rounded-md border border-slate-200 bg-white px-2 text-[11px] font-medium text-slate-600 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/10">
+                            {ALL_STATUSES.map((status) => <option key={status} value={status}>{STATUS_CONFIG[status].label}</option>)}
+                          </select>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-4 sm:px-8 py-4 sm:py-5 text-right hidden md:table-cell">
-                      <p className="text-xs font-bold text-slate-400">{formatDate(order.createdAt).split(' ')[0]}</p>
-                      <p className="text-[10px] text-slate-300 font-medium">{formatDate(order.createdAt).split(' ')[1]}</p>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="px-5 py-4 text-right"><p className="text-xs font-medium text-slate-600">{formatDate(order.createdAt).split(' ')[0]}</p><p className="mt-0.5 text-[10px] text-slate-400">{formatDate(order.createdAt).split(' ')[1]}</p></td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         )}
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="px-4 sm:px-8 py-4 sm:py-5 border-t border-slate-100 bg-slate-50/30 flex items-center justify-between gap-4">
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-              Trang {page} / {totalPages}
-            </p>
-            <div className="flex gap-2">
-              <Button variant="ghost" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)} className="rounded-xl border border-slate-200">
-                Trước
-              </Button>
-              <Button variant="ghost" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="rounded-xl border border-slate-200">
-                Tiếp theo
-              </Button>
-            </div>
-          </div>
-        )}
-      </div>
+        {totalPages > 1 && <div className="flex items-center justify-between border-t border-slate-100 px-5 py-4"><p className="text-xs text-slate-500">Trang {page} / {totalPages}</p><div className="flex gap-2"><Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((current) => current - 1)}>Trước</Button><Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((current) => current + 1)}>Tiếp</Button></div></div>}
+      </section>
     </div>
   );
 }
