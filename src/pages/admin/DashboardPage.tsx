@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import * as dashboardService from '@/services/admin/admin.dashboard.service';
 import type {
   AdminDashboardResponse,
@@ -9,8 +9,22 @@ import type {
 import { Spinner } from '@/components/ui';
 import { formatCurrency } from '@/utils/formatCurrency';
 
+function MetricIcon({ type }: { type: 'revenue' | 'orders' | 'users' }) {
+  const paths = {
+    revenue: <><path d="M12 3v18M16 7.5c0-1.7-1.8-3-4-3s-4 1.3-4 3 1.5 2.5 4 3 4 1.3 4 3-1.8 3-4 3-4-1.3-4-3" /></>,
+    orders: <><path d="M6 4h12v16H6z" /><path d="M9 8h6M9 12h6M9 16h4" /></>,
+    users: <><circle cx="9" cy="8" r="3" /><path d="M3.5 20a5.5 5.5 0 0 1 11 0M15 6a3 3 0 0 1 0 5.8M16 14.5a5 5 0 0 1 4.5 5" /></>,
+  };
+
+  return <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8">{paths[type]}</svg>;
+}
+
+function formatCompact(value: number) {
+  return new Intl.NumberFormat('vi-VN', { notation: 'compact', maximumFractionDigits: 1 }).format(value);
+}
+
 export default function DashboardPage() {
-  const [year, setYear] = useState<number>(2026);
+  const [year, setYear] = useState(2026);
   const [data, setData] = useState<AdminDashboardResponse | null>(null);
   const [revenue, setRevenue] = useState<MonthlyRevenueResponse[]>([]);
   const [quantity, setQuantity] = useState<MonthlyQuantityResponse[]>([]);
@@ -25,11 +39,11 @@ export default function DashboardPage() {
       dashboardService.getMonthlyQuantity(year),
       dashboardService.getOrderStatus(),
     ])
-      .then(([dashRes, revRes, qtyRes, statusRes]) => {
-        if (dashRes.data) setData(dashRes.data);
-        if (revRes.data) setRevenue(revRes.data);
-        if (qtyRes.data) setQuantity(qtyRes.data);
-        if (statusRes.data) setOrderStatus(statusRes.data);
+      .then(([dashRes, revenueRes, quantityRes, statusRes]) => {
+        setData(dashRes.data ?? null);
+        setRevenue(revenueRes.data ?? []);
+        setQuantity(quantityRes.data ?? []);
+        setOrderStatus(statusRes.data ?? []);
       })
       .catch((error: unknown) => {
         console.error('Dashboard API failed:', error);
@@ -37,198 +51,167 @@ export default function DashboardPage() {
       .finally(() => setIsLoading(false));
   }, [year]);
 
-  if (isLoading && !data) return <div className="flex justify-center py-32"><Spinner size="lg" /></div>;
+  const maxRevenue = Math.max(...revenue.map((item) => item.revenue), 1);
+  const maxQuantity = Math.max(...quantity.map((item) => item.quantity), 1);
 
-  const maxRevenue = revenue.length > 0 ? Math.max(...revenue.map(r => r.revenue), 1) : 1;
-  const maxQuantity = quantity.length > 0 ? Math.max(...quantity.map(q => q.quantity), 1) : 1;
+  if (isLoading && !data) {
+    return (
+      <div className="admin-surface flex min-h-[520px] items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
 
-  const statusColors: Record<string, string> = {
-    PENDING: 'bg-amber-400',
-    PROCESSING: 'bg-blue-400',
-    SHIPPED: 'bg-indigo-400',
-    DELIVERED: 'bg-emerald-400',
-    CANCELLED: 'bg-red-400',
-    CANCELED: 'bg-red-400',
-    REFUNDED: 'bg-slate-400',
-    SHIPPING: 'bg-indigo-300',
-  };
+  const metrics = [
+    {
+      label: 'Doanh thu',
+      value: formatCurrency(data?.totalRevenue ?? 0),
+      helper: `${year}`,
+      type: 'revenue' as const,
+    },
+    {
+      label: 'Đơn hàng',
+      value: formatCompact(data?.totalOrders ?? 0),
+      helper: 'Tổng đơn đã ghi nhận',
+      type: 'orders' as const,
+    },
+    {
+      label: 'Người dùng',
+      value: formatCompact(data?.totalUsers ?? 0),
+      helper: 'Tài khoản trong hệ thống',
+      type: 'users' as const,
+    },
+  ];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6">
+      <section className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Tổng quan hệ thống</h1>
-          <p className="text-slate-500 mt-1">Theo dõi hoạt động kinh doanh và hiệu suất bán hàng.</p>
+          <div className="admin-kicker">Overview</div>
+          <h1 className="admin-page-title mt-2">Tổng quan</h1>
+          <p className="admin-page-subtitle">Một cái nhìn nhanh về hoạt động bán hàng và vận hành.</p>
         </div>
-        <select
-          value={year}
-          onChange={(e) => setYear(Number(e.target.value))}
-          className="bg-white border border-slate-200 text-slate-800 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block p-2.5"
-        >
-          {[2024, 2025, 2026, 2027].map((y) => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
-      </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-medium text-slate-500">Năm</span>
+          <select
+            value={year}
+            onChange={(event) => setYear(Number(event.target.value))}
+            className="h-10 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 outline-none transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+          >
+            {[2024, 2025, 2026, 2027].map((item) => <option key={item} value={item}>{item}</option>)}
+          </select>
+        </div>
+      </section>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex items-center justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-indigo-50 opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
-          <div>
-            <p className="text-slate-500 font-medium mb-2 text-sm uppercase tracking-wider">Tổng doanh thu</p>
-            <p className="text-4xl font-black text-indigo-600">{formatCurrency(data?.totalRevenue || 0)}</p>
+      <section className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+        {metrics.map((metric) => (
+          <div key={metric.label} className="admin-surface flex min-h-[140px] flex-col justify-between p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-medium text-slate-500">{metric.label}</p>
+                <p className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">{metric.value}</p>
+              </div>
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50 text-indigo-600 ring-1 ring-inset ring-slate-200">
+                <MetricIcon type={metric.type} />
+              </span>
+            </div>
+            <p className="text-xs text-slate-400">{metric.helper}</p>
           </div>
-          <div className="w-14 h-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-500">
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        ))}
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-[1.65fr_1fr]">
+        <div className="admin-surface overflow-hidden">
+          <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-4">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Doanh thu theo tháng</h2>
+              <p className="mt-0.5 text-xs text-slate-500">Hiệu suất theo từng tháng của {year}.</p>
+            </div>
+            <span className="rounded-md bg-slate-50 px-2 py-1 text-[11px] font-semibold text-slate-500">VNĐ</span>
+          </div>
+          <div className="px-5 pb-5 pt-7">
+            {revenue.length > 0 ? (
+              <div className="flex h-64 items-end gap-2 sm:gap-3">
+                {revenue.map((item) => {
+                  const height = Math.max((item.revenue / maxRevenue) * 100, 2);
+                  return (
+                    <div key={item.month} className="group relative flex h-full flex-1 flex-col justify-end">
+                      <div className="mb-2 text-center text-[10px] font-semibold text-slate-400 opacity-0 transition group-hover:opacity-100">{formatCurrency(item.revenue)}</div>
+                      <div className="relative flex h-full items-end">
+                        <div className="w-full rounded-md bg-slate-100" style={{ height: `${height}%` }} />
+                        <div className="absolute bottom-0 left-0 w-full rounded-md bg-indigo-600 opacity-90 transition-all duration-200 group-hover:bg-indigo-700" style={{ height: `${height}%` }} />
+                      </div>
+                      <span className="mt-2 text-center text-[10px] font-medium text-slate-400">T{item.month}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex h-64 items-center justify-center text-sm text-slate-400">Chưa có dữ liệu doanh thu.</div>
+            )}
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex items-center justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-blue-50 opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
-          <div>
-            <p className="text-slate-500 font-medium mb-2 text-sm uppercase tracking-wider">Tổng đơn hàng</p>
-            <p className="text-4xl font-black text-slate-800">{data?.totalOrders?.toLocaleString() || 0}</p>
+        <div className="admin-surface overflow-hidden">
+          <div className="border-b border-slate-100 px-5 py-4">
+            <h2 className="text-sm font-semibold text-slate-900">Trạng thái đơn hàng</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Phân bổ trạng thái hiện tại.</p>
           </div>
-          <div className="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-500">
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex items-center justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-teal-50 opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
-          <div>
-            <p className="text-slate-500 font-medium mb-2 text-sm uppercase tracking-wider">Tổng người dùng</p>
-            <p className="text-4xl font-black text-slate-800">{data?.totalUsers?.toLocaleString() || 0}</p>
-          </div>
-          <div className="w-14 h-14 rounded-2xl bg-teal-50 flex items-center justify-center text-teal-500">
-            <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-          <h2 className="text-lg font-bold text-slate-800 mb-6">Doanh thu theo tháng</h2>
-          {revenue.length > 0 ? (
-            <div className="h-64 flex items-end justify-between gap-2">
-              {revenue.map(item => (
-                <div key={item.month} className="relative flex flex-col items-center flex-1 group h-full justify-end">
-                  <div
-                    className="w-full bg-indigo-200 rounded-t-md group-hover:bg-indigo-400 transition-colors cursor-pointer"
-                    style={{ height: `${(item.revenue / maxRevenue) * 100}%`, minHeight: '4px' }}
-                    title={formatCurrency(item.revenue)}
-                  ></div>
-                  <span className="text-xs text-slate-400 mt-2 font-medium">T{item.month}</span>
-                  <div className="absolute -top-10 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                    {formatCurrency(item.revenue)}
-                  </div>
+          <div className="space-y-4 p-5">
+            {orderStatus.length > 0 ? orderStatus.map((status) => (
+              <div key={status.status}>
+                <div className="mb-1.5 flex items-center justify-between gap-3">
+                  <span className="text-xs font-medium text-slate-600">{status.status}</span>
+                  <span className="text-xs font-semibold text-slate-900">{status.percentage.toFixed(1)}%</span>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="h-64 flex items-center justify-center text-slate-400 text-sm italic">
-              Chưa có dữ liệu doanh thu tháng.
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
-          <h2 className="text-lg font-bold text-slate-800 mb-6">Số lượng bán ra theo tháng</h2>
-          {quantity.length > 0 ? (
-            <div className="h-64 flex items-end justify-between gap-2">
-              {quantity.map(item => (
-                <div key={item.month} className="relative flex flex-col items-center flex-1 group h-full justify-end">
-                  <div
-                    className="w-full bg-teal-200 rounded-t-md group-hover:bg-teal-400 transition-colors cursor-pointer"
-                    style={{ height: `${(item.quantity / maxQuantity) * 100}%`, minHeight: '4px' }}
-                    title={`${item.quantity} sản phẩm`}
-                  ></div>
-                  <span className="text-xs text-slate-400 mt-2 font-medium">T{item.month}</span>
-                  <div className="absolute -top-10 bg-slate-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                    {item.quantity.toLocaleString()} sp
-                  </div>
+                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full rounded-full bg-indigo-600 transition-all" style={{ width: `${Math.min(status.percentage, 100)}%` }} />
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="h-64 flex items-center justify-center text-slate-400 text-sm italic">
-              Chưa có dữ liệu đơn hàng tháng.
-            </div>
-          )}
+                <p className="mt-1 text-[11px] text-slate-400">{status.count} đơn</p>
+              </div>
+            )) : <p className="py-10 text-center text-sm text-slate-400">Chưa có dữ liệu.</p>}
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 col-span-1">
-          <h2 className="text-lg font-bold text-slate-800 mb-6">Trạng thái đơn hàng</h2>
-          {orderStatus.length > 0 ? (
-            <div className="space-y-4">
-              {orderStatus.map((status) => (
-                <div key={status.status}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="font-medium text-slate-600">{status.status}</span>
-                    <span className="font-bold text-slate-800">{status.percentage.toFixed(1)}% ({status.count})</span>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-full h-2.5">
-                    <div
-                      className={`h-2.5 rounded-full ${statusColors[status.status] || 'bg-slate-400'}`}
-                      style={{ width: `${status.percentage}%` }}
-                    ></div>
-                  </div>
-                </div>
-              ))}
+      <section className="grid grid-cols-1 gap-4 xl:grid-cols-[1.65fr_1fr]">
+        <div className="admin-surface overflow-hidden">
+          <div className="flex items-start justify-between border-b border-slate-100 px-5 py-4">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900">Sản phẩm bán chạy</h2>
+              <p className="mt-0.5 text-xs text-slate-500">Những sản phẩm tạo doanh thu nhiều nhất.</p>
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-10">
-              <p className="text-slate-400 text-sm">Chưa có dữ liệu trạng thái.</p>
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden col-span-1 lg:col-span-2">
-          <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-            <h2 className="text-lg font-bold text-slate-800">Sản phẩm bán chạy nhất</h2>
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-white text-slate-400 uppercase text-xs font-semibold border-b border-slate-100">
-                <tr>
-                  <th className="px-6 py-4">Sản phẩm</th>
-                  <th className="px-6 py-4 text-center">Đã bán</th>
-                  <th className="px-6 py-4 text-right">Doanh thu</th>
-                  <th className="px-6 py-4 text-right">Tỉ trọng</th>
+            <table className="w-full min-w-[620px] text-left">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/60">
+                  <th className="px-5 py-3 text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Sản phẩm</th>
+                  <th className="px-5 py-3 text-center text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Đã bán</th>
+                  <th className="px-5 py-3 text-right text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Doanh thu</th>
+                  <th className="px-5 py-3 text-right text-[10px] font-bold uppercase tracking-[0.08em] text-slate-500">Tỷ trọng</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
-                {data?.topProducts && data.topProducts.map((p, index) => {
-                  const percentage = data.totalRevenue > 0 ? (p.totalRevenue / data.totalRevenue) * 100 : 0;
+              <tbody className="divide-y divide-slate-100">
+                {data?.topProducts?.map((product, index) => {
+                  const percentage = (data.totalRevenue ?? 0) > 0 ? (product.totalRevenue / data.totalRevenue) * 100 : 0;
                   return (
-                    <tr key={p.productId} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-6 py-4">
+                    <tr key={product.productId} className="hover:bg-slate-50/60">
+                      <td className="px-5 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 font-bold shrink-0">
-                            #{index + 1}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-slate-800 line-clamp-1">{p.productName}</p>
-                            <p className="text-xs text-slate-400">ID: {p.productId}</p>
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-[11px] font-bold text-slate-500">{String(index + 1).padStart(2, '0')}</span>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-slate-900">{product.productName}</p>
+                            <p className="mt-0.5 text-[11px] text-slate-400">#{product.productId}</p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-slate-100 text-slate-600 font-medium text-xs">
-                          {p.totalSales}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right font-bold text-indigo-600">
-                        {formatCurrency(p.totalRevenue)}
-                      </td>
-                      <td className="px-6 py-4">
+                      <td className="px-5 py-4 text-center text-xs font-semibold text-slate-700">{product.totalSales}</td>
+                      <td className="px-5 py-4 text-right text-xs font-semibold text-slate-900">{formatCurrency(product.totalRevenue)}</td>
+                      <td className="px-5 py-4">
                         <div className="flex items-center justify-end gap-2">
-                          <span className="text-xs font-medium text-slate-500 w-8 text-right">{percentage.toFixed(1)}%</span>
-                          <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${percentage}%` }}></div>
-                          </div>
+                          <span className="text-[11px] font-semibold text-slate-500">{percentage.toFixed(1)}%</span>
+                          <div className="h-1.5 w-16 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-indigo-600" style={{ width: `${Math.min(percentage, 100)}%` }} /></div>
                         </div>
                       </td>
                     </tr>
@@ -238,7 +221,31 @@ export default function DashboardPage() {
             </table>
           </div>
         </div>
-      </div>
+
+        <div className="admin-surface overflow-hidden">
+          <div className="border-b border-slate-100 px-5 py-4">
+            <h2 className="text-sm font-semibold text-slate-900">Số lượng bán ra</h2>
+            <p className="mt-0.5 text-xs text-slate-500">Sản lượng theo tháng.</p>
+          </div>
+          <div className="px-5 pb-5 pt-7">
+            {quantity.length > 0 ? (
+              <div className="space-y-3">
+                {quantity.map((item) => (
+                  <div key={item.month} className="flex items-center gap-3">
+                    <span className="w-6 text-[10px] font-semibold text-slate-400">T{item.month}</span>
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-100">
+                      <div className="h-full rounded-full bg-slate-800" style={{ width: `${Math.max((item.quantity / maxQuantity) * 100, 1)}%` }} />
+                    </div>
+                    <span className="w-12 text-right text-[11px] font-semibold text-slate-600">{item.quantity.toLocaleString('vi-VN')}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex min-h-[240px] items-center justify-center text-sm text-slate-400">Chưa có dữ liệu sản lượng.</div>
+            )}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
