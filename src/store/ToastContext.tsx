@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -19,7 +20,7 @@ export const toastEvent = {
   },
   emit(msg: string, type: ToastType) {
     this.listeners.forEach(l => l(msg, type));
-  }
+  },
 };
 
 export const toast = {
@@ -48,8 +49,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     }, 1000);
   }, []);
 
-
-  // Listen to global emitter
   useEffect(() => {
     return toastEvent.subscribe((msg, type) => showToast(msg, type));
   }, [showToast]);
@@ -61,7 +60,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext.Provider value={{ showToast, success, error }}>
       {children}
 
-      {/* Global Toast Container */}
       <div className="toast toast-top toast-end z-[100] p-4 pointer-events-none">
         {toasts.map((toast) => (
           <div
