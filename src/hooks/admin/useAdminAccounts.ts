@@ -51,20 +51,15 @@ export function useAdminAccounts(initialFilters: AdminUserFilterRequest = DEFAUL
     setIsSubmitting(true);
     setSubmitError(null);
     try {
-      //data
-      console.log(data);
-      // api
       await accountService.createAdmin(data);
-      // fetch
       await fetchAccounts();
-
-      setIsSubmitting(false);
       return true;
     } catch (error: any) {
-      const msg = error.response?.data?.message || 'Không thể tạo tài khoản admin. Vui lòng thử lại.';
+      const msg = error.response?.data?.message ?? 'Không thể tạo tài khoản admin. Vui lòng thử lại.';
       setSubmitError(msg);
-      setIsSubmitting(false);
       return false;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
