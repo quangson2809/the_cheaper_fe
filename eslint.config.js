@@ -23,4 +23,12 @@ export default defineConfig([
       'react-hooks/set-state-in-effect': 'off',
     },
   },
+  {
+    // Context modules intentionally export context objects/hooks alongside providers.
+    // Fast Refresh's component-only export rule is not applicable to these modules.
+    files: ['src/store/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ])
