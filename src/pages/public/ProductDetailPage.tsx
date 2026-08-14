@@ -1,8 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useProductDetail } from '@/hooks/product/useProductDetail';
 import { useCart } from '@/hooks/user/useCart';
-import { useAuthContext } from '@/store/AuthContext';
 import { Button, Spinner } from '@/components/ui';
 import { EmptyState, PageHeader } from '@/components/common';
 import { formatCurrency } from '@/utils/formatCurrency';
@@ -12,8 +11,6 @@ export default function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { product, isLoading, notFound } = useProductDetail(Number(id));
   const { addItem } = useCart();
-  const { isAuthenticated } = useAuthContext();
-  const navigate = useNavigate();
 
   const [quantity, setQuantity] = useState(1);
   const [addedMsg, setAddedMsg] = useState('');

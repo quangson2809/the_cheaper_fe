@@ -16,7 +16,7 @@ const MOCK_ORDER_OVERVIEWS: AdminOrderOverviewResponse[] = [
     location: '12 Nguyễn Văn Bảo, Gò Vấp, TP.HCM',
     phone: '0901234567',
     paymentMethodCode: 'COD',
-    paymentStatus: 'UNPAID',
+    paymentStatus: 0,
   },
   {
     id: 1002,
@@ -27,7 +27,7 @@ const MOCK_ORDER_OVERVIEWS: AdminOrderOverviewResponse[] = [
     location: '45 Lê Lợi, Q1, TP.HCM',
     phone: '0912345678',
     paymentMethodCode: 'MOMO',
-    paymentStatus: 'PAID',
+    paymentStatus: 1,
   },
   {
     id: 1003,
@@ -38,7 +38,7 @@ const MOCK_ORDER_OVERVIEWS: AdminOrderOverviewResponse[] = [
     location: '88 Trần Hưng Đạo, Q5, TP.HCM',
     phone: '0923456789',
     paymentMethodCode: 'COD',
-    paymentStatus: 'UNPAID',
+    paymentStatus: 0,
   },
   {
     id: 1004,
@@ -49,7 +49,7 @@ const MOCK_ORDER_OVERVIEWS: AdminOrderOverviewResponse[] = [
     location: '20 Đinh Tiên Hoàng, Bình Thạnh, TP.HCM',
     phone: '0934567890',
     paymentMethodCode: 'VNPAY',
-    paymentStatus: 'PAID',
+    paymentStatus: 1,
   },
   {
     id: 1005,
@@ -60,7 +60,7 @@ const MOCK_ORDER_OVERVIEWS: AdminOrderOverviewResponse[] = [
     location: '5 Pasteur, Q3, TP.HCM',
     phone: '0945678901',
     paymentMethodCode: 'COD',
-    paymentStatus: 'UNPAID',
+    paymentStatus: 0,
   },
 ];
 
@@ -72,7 +72,7 @@ const MOCK_ORDER_DETAILS: AdminOrderDetailResponse[] = [
     status: 'PENDING',
     createdAt: '2024-06-01T08:30:00Z',
     paymentMethodCode: 'COD',
-    paymentStatus: 'UNPAID',
+    paymentStatus: 0,
     receiver: 'Nguyễn Văn A',
     phone: '0901234567',
     location: '12 Nguyễn Văn Bảo, Gò Vấp, TP.HCM',
@@ -87,7 +87,7 @@ const MOCK_ORDER_DETAILS: AdminOrderDetailResponse[] = [
     status: 'PROCESSING',
     createdAt: '2024-06-02T10:15:00Z',
     paymentMethodCode: 'MOMO',
-    paymentStatus: 'PAID',
+    paymentStatus: 1,
     receiver: 'Trần Thị B',
     phone: '0912345678',
     location: '45 Lê Lợi, Q1, TP.HCM',
@@ -138,7 +138,7 @@ export function getMockAdminOrderById(id: number): AdminOrderDetailResponse {
     status: 'PENDING',
     createdAt: new Date().toISOString(),
     paymentMethodCode: 'BANK_TRANSFER',
-    paymentStatus: 'UNPAID',
+    paymentStatus: 0,
     receiver: 'Khách Hàng Thử Nghiệm',
     phone: '0988777666',
     location: 'Khu Công Nghệ Cao, Quận 9, TP. Thủ Đức',

@@ -23,6 +23,11 @@ export default function RegisterPage() {
             <h1 className="text-2xl font-extrabold text-slate-800 mt-2">Tạo tài khoản</h1>
             <p className="text-slate-500 text-sm mt-1">Mua sắm thông minh, tiết kiệm thật sự</p>
           </div>
+          {error && (
+            <div className="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300">
+              {error}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input

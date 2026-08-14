@@ -17,6 +17,11 @@ export default function ForgotPasswordPage() {
             <span className="text-4xl">🔐</span>
             <h1 className="text-2xl font-extrabold text-slate-800 mt-2">Đặt lại mật khẩu</h1>
           </div>
+          {error && (
+            <div className="mb-6 p-4 bg-rose-50 border border-rose-100 text-rose-600 rounded-2xl text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-300">
+              {error}
+            </div>
+          )}
 
           {step === 'email' && (
             <form
