@@ -1,6 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import * as catalogService from '@/services/admin/admin.catalog.service';
 import type { AdminOptionAttributeResponse, AdminOptionAttributeRequest } from '@/types/admin.types';
+import type { AxiosError } from 'axios';
+
+type ApiErrorBody = {
+  message?: string;
+};
 
 export function useAdminAttributes() {
   const [attributes, setAttributes] = useState<AdminOptionAttributeResponse[]>([]);
@@ -24,26 +29,28 @@ export function useAdminAttributes() {
   }, []);
 
   useEffect(() => {
-    fetchAttributes();
+    void fetchAttributes();
   }, [fetchAttributes]);
 
   const createAttribute = async (data: AdminOptionAttributeRequest) => {
     try {
       await catalogService.createAttribute(data);
-      fetchAttributes();
+      await fetchAttributes();
       return { success: true };
-    } catch (err: any) {
-      return { success: false, message: err.response?.data?.message || 'Không thể tạo thuộc tính' };
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<ApiErrorBody>;
+      return { success: false, message: axiosError.response?.data?.message || 'Không thể tạo thuộc tính' };
     }
   };
 
   const updateAttribute = async (id: number, data: AdminOptionAttributeRequest) => {
     try {
       await catalogService.updateAttribute(id, data);
-      fetchAttributes();
+      await fetchAttributes();
       return { success: true };
-    } catch (err: any) {
-      return { success: false, message: err.response?.data?.message || 'Không thể cập nhật thuộc tính' };
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<ApiErrorBody>;
+      return { success: false, message: axiosError.response?.data?.message || 'Không thể cập nhật thuộc tính' };
     }
   };
 
@@ -51,9 +58,9 @@ export function useAdminAttributes() {
     if (!confirm('Bạn có chắc muốn xóa thuộc tính này? Tất cả giá trị liên quan sẽ bị xóa.')) return;
     try {
       await catalogService.deleteAttribute(id);
-      fetchAttributes();
+      await fetchAttributes();
       return true;
-    } catch (err) {
+    } catch {
       alert('Không thể xóa thuộc tính.');
       return false;
     }
