@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import * as accountService from '@/services/admin/admin.account.service';
 import type { AdminAccountResponse, AdminUserFilterRequest, AdminCreateAdminRequest } from '@/types/admin.types';
 import type { Page } from '@/types/api.types';
+import type { AxiosError } from 'axios';
 
 const DEFAULT_FILTERS: AdminUserFilterRequest = {
   page: 1,
@@ -10,12 +11,15 @@ const DEFAULT_FILTERS: AdminUserFilterRequest = {
   role: '',
 };
 
+type ApiErrorBody = {
+  message?: string;
+};
+
 export function useAdminAccounts(initialFilters: AdminUserFilterRequest = DEFAULT_FILTERS) {
   const [data, setData] = useState<Page<AdminAccountResponse> | null>(null);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<AdminUserFilterRequest>(initialFilters);
 
-  // Creation state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
@@ -54,8 +58,9 @@ export function useAdminAccounts(initialFilters: AdminUserFilterRequest = DEFAUL
       await accountService.createAdmin(data);
       await fetchAccounts();
       return true;
-    } catch (error: any) {
-      const msg = error.response?.data?.message ?? 'Không thể tạo tài khoản admin. Vui lòng thử lại.';
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<ApiErrorBody>;
+      const msg = axiosError.response?.data?.message ?? 'Không thể tạo tài khoản admin. Vui lòng thử lại.';
       setSubmitError(msg);
       return false;
     } finally {
@@ -77,6 +82,6 @@ export function useAdminAccounts(initialFilters: AdminUserFilterRequest = DEFAUL
     createAdmin,
     isSubmitting,
     submitError,
-    setSubmitError
+    setSubmitError,
   };
 }
