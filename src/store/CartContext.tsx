@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 
 export interface CartContextValue {
@@ -6,23 +7,33 @@ export interface CartContextValue {
   resetCart: () => void;
 }
 
+interface GuestCartItem {
+  variantId: number;
+  quantity?: number;
+}
+
 export const CartContext = createContext<CartContextValue | null>(null);
+
+function isGuestCartItem(item: unknown): item is GuestCartItem {
+  if (typeof item !== 'object' || item === null) return false;
+  const candidate = item as Record<string, unknown>;
+  return typeof candidate.variantId === 'number';
+}
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cartCount, setCartCount] = useState(0);
 
   useEffect(() => {
-    // Run one-time cleanup for legacy mock data (variantId 7 and 15)
     const hasCleaned = localStorage.getItem('cart_cleaned_legacy_mock');
     let currentGuestCart = localStorage.getItem('guestCart');
 
     if (!hasCleaned) {
       if (currentGuestCart) {
         try {
-          const items = JSON.parse(currentGuestCart);
-          if (Array.isArray(items)) {
-            // Filter out the legacy mock items (variantId: 7 and 15)
-            const cleanedItems = items.filter((item: any) => item.variantId !== 7 && item.variantId !== 15);
+          const parsed: unknown = JSON.parse(currentGuestCart);
+          if (Array.isArray(parsed)) {
+            const items = parsed.filter(isGuestCartItem);
+            const cleanedItems = items.filter((item) => item.variantId !== 7 && item.variantId !== 15);
             if (cleanedItems.length === 0) {
               localStorage.removeItem('guestCart');
               currentGuestCart = null;
@@ -43,9 +54,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const isAuth = !!localStorage.getItem('accessToken');
     if (currentGuestCart && !isAuth) {
       try {
-        const items = JSON.parse(currentGuestCart);
-        if (Array.isArray(items)) {
-          setCartCount(items.reduce((sum: number, i: any) => sum + (i.quantity || 0), 0));
+        const parsed: unknown = JSON.parse(currentGuestCart);
+        if (Array.isArray(parsed)) {
+          const items = parsed.filter(isGuestCartItem);
+          setCartCount(items.reduce((sum, item) => sum + (item.quantity || 0), 0));
         }
       } catch {
         setCartCount(0);
