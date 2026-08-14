@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { AuthResponse } from '@/types/auth.types';
 
@@ -33,8 +34,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   if (token) {
     const payload = JSON.parse(atob(token.split('.')[1]));
     isExpired = payload.exp * 1000 < Date.now();
-    console.log("Token", token);
-    console.log("Expired token:", isExpired);
+    console.log('Token', token);
+    console.log('Expired token:', isExpired);
 
     if (isExpired) {
       clearAuth();
