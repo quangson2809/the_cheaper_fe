@@ -4,7 +4,7 @@ import type {
   AdminDashboardResponse,
   MonthlyRevenueResponse,
   MonthlyQuantityResponse,
-  OrderStatusRatioResponse
+  OrderStatusRatioResponse,
 } from '@/types/admin.types';
 import { Spinner } from '@/components/ui';
 import { formatCurrency } from '@/utils/formatCurrency';
@@ -19,31 +19,22 @@ export default function DashboardPage() {
 
   useEffect(() => {
     setIsLoading(true);
-    // Đảm bảo gọi đủ 4 API, nếu API nào lỗi thì trả về Promise reject và xử lý riêng lẻ
-    Promise.allSettled([
-      dashboardService.getDashboardStats(year).catch(err => { console.error('Stats Error'); throw err; }),
-      dashboardService.getMonthlyRevenue(year).catch(err => { console.error('Revenue Error'); throw err; }),
-      dashboardService.getMonthlyQuantity(year).catch(err => { console.error('Quantity Error'); throw err; }),
-      dashboardService.getOrderStatus().catch(err => { console.error('Status Error'); throw err; })
-    ]).then(([dashRes, revRes, qtyRes, statusRes]) => {
-
-      if (dashRes.status === 'fulfilled') {
-        const payload = dashRes.value.data !== undefined ? dashRes.value.data : dashRes.value;
-        if (payload) setData(payload as any);
-      }
-      if (revRes.status === 'fulfilled') {
-        const payload = revRes.value.data !== undefined ? revRes.value.data : revRes.value;
-        if (payload) setRevenue(payload as any);
-      }
-      if (qtyRes.status === 'fulfilled') {
-        const payload = qtyRes.value.data !== undefined ? qtyRes.value.data : qtyRes.value;
-        if (payload) setQuantity(payload as any);
-      }
-      if (statusRes.status === 'fulfilled') {
-        const payload = statusRes.value.data !== undefined ? statusRes.value.data : statusRes.value;
-        if (payload) setOrderStatus(payload as any);
-      }
-    }).finally(() => setIsLoading(false));
+    void Promise.all([
+      dashboardService.getDashboardStats(year),
+      dashboardService.getMonthlyRevenue(year),
+      dashboardService.getMonthlyQuantity(year),
+      dashboardService.getOrderStatus(),
+    ])
+      .then(([dashRes, revRes, qtyRes, statusRes]) => {
+        if (dashRes.data) setData(dashRes.data);
+        if (revRes.data) setRevenue(revRes.data);
+        if (qtyRes.data) setQuantity(qtyRes.data);
+        if (statusRes.data) setOrderStatus(statusRes.data);
+      })
+      .catch((error: unknown) => {
+        console.error('Dashboard API failed:', error);
+      })
+      .finally(() => setIsLoading(false));
   }, [year]);
 
   if (isLoading && !data) return <div className="flex justify-center py-32"><Spinner size="lg" /></div>;
@@ -52,14 +43,14 @@ export default function DashboardPage() {
   const maxQuantity = quantity.length > 0 ? Math.max(...quantity.map(q => q.quantity), 1) : 1;
 
   const statusColors: Record<string, string> = {
-    'PENDING': 'bg-amber-400',
-    'PROCESSING': 'bg-blue-400',
-    'SHIPPED': 'bg-indigo-400',
-    'DELIVERED': 'bg-emerald-400',
-    'CANCELLED': 'bg-red-400',
-    'CANCELED': 'bg-red-400',
-    'REFUNDED': 'bg-slate-400',
-    'SHIPPING': 'bg-indigo-300'
+    PENDING: 'bg-amber-400',
+    PROCESSING: 'bg-blue-400',
+    SHIPPED: 'bg-indigo-400',
+    DELIVERED: 'bg-emerald-400',
+    CANCELLED: 'bg-red-400',
+    CANCELED: 'bg-red-400',
+    REFUNDED: 'bg-slate-400',
+    SHIPPING: 'bg-indigo-300',
   };
 
   return (
@@ -80,7 +71,6 @@ export default function DashboardPage() {
         </select>
       </div>
 
-      {/* Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 flex items-center justify-between relative overflow-hidden group hover:shadow-md transition-shadow">
           <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-indigo-50 opacity-50 group-hover:scale-110 transition-transform duration-500"></div>
@@ -117,7 +107,6 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Doanh thu theo tháng */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
           <h2 className="text-lg font-bold text-slate-800 mb-6">Doanh thu theo tháng</h2>
           {revenue.length > 0 ? (
@@ -143,7 +132,6 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Số lượng bán ra theo tháng */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
           <h2 className="text-lg font-bold text-slate-800 mb-6">Số lượng bán ra theo tháng</h2>
           {quantity.length > 0 ? (
@@ -171,7 +159,6 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Tỉ lệ trạng thái đơn hàng */}
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100 col-span-1">
           <h2 className="text-lg font-bold text-slate-800 mb-6">Trạng thái đơn hàng</h2>
           {orderStatus.length > 0 ? (
@@ -198,7 +185,6 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* Top Products Table */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden col-span-1 lg:col-span-2">
           <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
             <h2 className="text-lg font-bold text-slate-800">Sản phẩm bán chạy nhất</h2>
@@ -215,7 +201,7 @@ export default function DashboardPage() {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {data?.topProducts && data.topProducts.map((p, index) => {
-                  const percentage = (data.totalRevenue || 0) > 0 ? (p.totalRevenue / data.totalRevenue) * 100 : 0;
+                  const percentage = data.totalRevenue > 0 ? (p.totalRevenue / data.totalRevenue) * 100 : 0;
                   return (
                     <tr key={p.productId} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-6 py-4">
@@ -248,13 +234,6 @@ export default function DashboardPage() {
                     </tr>
                   );
                 })}
-                {(!data?.topProducts || data.topProducts.length === 0) && (
-                  <tr>
-                    <td colSpan={4} className="text-center py-12 text-slate-500">
-                      Chưa có dữ liệu sản phẩm bán chạy.
-                    </td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
@@ -263,4 +242,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
