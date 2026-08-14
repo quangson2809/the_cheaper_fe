@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Outlet, NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/auth/useAuth';
 
@@ -16,7 +16,7 @@ const navItems = [
 
 function NavIcon({ name }: { name: string }) {
   const common = 'h-[18px] w-[18px]';
-  const paths: Record<string, JSX.Element> = {
+  const paths: Record<string, ReactNode> = {
     grid: <><rect x="4" y="4" width="6" height="6" rx="1" /><rect x="14" y="4" width="6" height="6" rx="1" /><rect x="4" y="14" width="6" height="6" rx="1" /><rect x="14" y="14" width="6" height="6" rx="1" /></>,
     receipt: <><path d="M5 4h14v16l-2-1.3L15 20l-2-1.3L11 20l-2-1.3L7 20l-2-1.3V4Z" /><path d="M8 8h8M8 12h8" /></>,
     box: <><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9L12 3Z" /><path d="m4.5 7.8 7.5 4.3 7.5-4.3M12 12.1V21" /></>,
@@ -40,9 +40,7 @@ export default function AdminLayout() {
   const location = useLocation();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    setIsSidebarOpen(false);
-  }, [location.pathname]);
+  useEffect(() => setIsSidebarOpen(false), [location.pathname]);
 
   useEffect(() => {
     document.body.style.overflow = isSidebarOpen ? 'hidden' : '';
@@ -59,11 +57,7 @@ export default function AdminLayout() {
             <span className="block text-[11px] text-slate-500">Admin console</span>
           </span>
         </Link>
-        <button
-          onClick={() => setIsSidebarOpen(false)}
-          className="ml-auto rounded-md p-2 text-slate-500 hover:bg-slate-800 hover:text-slate-200 md:hidden"
-          aria-label="Đóng menu"
-        >
+        <button onClick={() => setIsSidebarOpen(false)} className="ml-auto rounded-md p-2 text-slate-500 hover:bg-slate-800 hover:text-slate-200 md:hidden" aria-label="Đóng menu">
           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18 18 6M6 6l12 12" /></svg>
         </button>
       </div>
@@ -72,12 +66,7 @@ export default function AdminLayout() {
         <p className="px-2 pb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-600">Workspace</p>
         <nav className="space-y-1">
           {navItems.map(({ to, label, end, icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              end={end}
-              className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-950/30' : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-100'}`}
-            >
+            <NavLink key={to} to={to} end={end} className={({ isActive }) => `group flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-colors ${isActive ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-950/30' : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-100'}`}>
               {({ isActive }) => (
                 <>
                   <span className={isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}><NavIcon name={icon} /></span>
@@ -90,14 +79,8 @@ export default function AdminLayout() {
       </div>
 
       <div className="mt-auto border-t border-slate-800 p-4">
-        <Link to="/" className="mb-1 flex items-center gap-2 rounded-lg px-3 py-2.5 text-[13px] font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-100">
-          <span className="text-base">↗</span>
-          Xem cửa hàng
-        </Link>
-        <button onClick={() => void logout()} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[13px] font-medium text-slate-500 hover:bg-red-950/40 hover:text-red-300">
-          <span className="text-base">↪</span>
-          Đăng xuất
-        </button>
+        <Link to="/" className="mb-1 flex items-center gap-2 rounded-lg px-3 py-2.5 text-[13px] font-medium text-slate-400 hover:bg-slate-800 hover:text-slate-100"><span className="text-base">↗</span>Xem cửa hàng</Link>
+        <button onClick={() => void logout()} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-[13px] font-medium text-slate-500 hover:bg-red-950/40 hover:text-red-300"><span className="text-base">↪</span>Đăng xuất</button>
       </div>
     </aside>
   );
@@ -105,34 +88,14 @@ export default function AdminLayout() {
   return (
     <div className="min-h-screen bg-[#f6f7fb]">
       <div className="hidden md:fixed md:inset-y-0 md:flex">{sidebar}</div>
-
-      {isSidebarOpen && (
-        <>
-          <div className="fixed inset-0 z-40 bg-slate-950/35 md:hidden" onClick={() => setIsSidebarOpen(false)} aria-hidden="true" />
-          <div className="fixed inset-y-0 left-0 z-50 flex md:hidden">{sidebar}</div>
-        </>
-      )}
-
+      {isSidebarOpen && <><div className="fixed inset-0 z-40 bg-slate-950/35 md:hidden" onClick={() => setIsSidebarOpen(false)} aria-hidden="true" /><div className="fixed inset-y-0 left-0 z-50 flex md:hidden">{sidebar}</div></>}
       <div className="md:pl-[264px]">
         <header className="sticky top-0 z-30 flex h-16 items-center border-b border-slate-200/80 bg-white/90 px-4 backdrop-blur md:px-8">
-          <button onClick={() => setIsSidebarOpen(true)} className="mr-3 rounded-lg p-2 text-slate-500 hover:bg-slate-100 md:hidden" aria-label="Mở menu">
-            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
-          </button>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-medium text-slate-400">The Cheaper / Admin</p>
-            <p className="truncate text-sm font-semibold text-slate-800">{location.pathname === '/admin' ? 'Tổng quan' : 'Quản trị hệ thống'}</p>
-          </div>
-          <div className="hidden items-center gap-3 sm:flex">
-            <span className="h-2 w-2 rounded-full bg-emerald-500" />
-            <span className="text-xs font-medium text-slate-500">System online</span>
-          </div>
+          <button onClick={() => setIsSidebarOpen(true)} className="mr-3 rounded-lg p-2 text-slate-500 hover:bg-slate-100 md:hidden" aria-label="Mở menu"><svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" /></svg></button>
+          <div className="min-w-0 flex-1"><p className="text-xs font-medium text-slate-400">The Cheaper / Admin</p><p className="truncate text-sm font-semibold text-slate-800">{location.pathname === '/admin' ? 'Tổng quan' : 'Quản trị hệ thống'}</p></div>
+          <div className="hidden items-center gap-3 sm:flex"><span className="h-2 w-2 rounded-full bg-emerald-500" /><span className="text-xs font-medium text-slate-500">System online</span></div>
         </header>
-
-        <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-          <div className="admin-page">
-            <Outlet />
-          </div>
-        </main>
+        <main className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8"><div className="admin-page"><Outlet /></div></main>
       </div>
     </div>
   );
